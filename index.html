@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bienvenue à l'UIYA – Salon de l'Orientation 2026</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════ -->
+  <header class="header">
+    <div class="header-inner">
+
+      <div class="logo-box">
+        <img src="asset/UIYA.jpg" alt="Logo UIYA" class="logo-img" />
+      </div>
+     
+      <div class="header-text">
+        <h1>Université Internationale de <br>Yamoussoukro</h1>
+        <p>Salon de l'Orientation 2026</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Vague décorative -->
+  <div class="wave-wrap">
+    <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg"
+         preserveAspectRatio="none" height="52">
+      <path d="M0,40 C360,0 1080,80 1440,20 L1440,60 L0,60 Z" fill="#f8f9ff"/>
+    </svg>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SECTION BIENVENUE
+  ══════════════════════════════════════ -->
+  <section class="welcome">
+    <div class="badge">Bienvenue !</div>
+    <h2>Heureux de vous rencontrer<br>à <span>l'UIYA</span> 🎉</h2>
+    <p>Vous avez visité notre stand. Rejoignez notre communauté et lancez votre avenir en quelques secondes !</p>
+  </section>
+
+  <!-- Étapes -->
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <span class="step-label">Rejoindre<br>le groupe</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-num red">2</div>
+      <span class="step-label">Pré-<br>inscription</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-num green">3</div>
+      <span class="step-label">Dossier<br>validé ✓</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       CARTES D'ACTION
+  ══════════════════════════════════════ -->
+  <main class="cards">
+
+    <!-- Carte 1 : WhatsApp -->
+    <div class="card card-wa"
+         onclick="openWA()"
+         role="button" tabindex="0"
+         aria-label="Rejoindre le groupe WhatsApp UIYA">
+      <span class="card-tag">Étape 1</span>
+      <div class="card-icon" aria-hidden="true">💬</div>
+      <h3>Intégrer le groupe WhatsApp</h3>
+      <p>Recevez toutes les infos, dates importantes et actualités de l'UIYA directement sur WhatsApp.</p>
+      <button class="card-btn">Rejoindre maintenant →</button>
+    </div>
+
+    <!-- Carte 2 : Pré-inscription -->
+    <div class="card card-preinscrit"
+         onclick="openForm()"
+         role="button" tabindex="0"
+         aria-label="Faire ma pré-inscription à l'UIYA">
+      <span class="card-tag">Étape 2</span>
+      <div class="card-icon" aria-hidden="true">📝</div>
+      <h3>Faire ma pré-inscription</h3>
+      <p>Remplissez votre fiche en 2 minutes. Notre équipe vous contacte pour finaliser votre dossier.</p>
+      <button class="card-btn">Commencer →</button>
+      <button class="card-btn card-btn-secondary" type="button"
+              onclick="event.stopPropagation(); skipPreinscription();">
+        Non merci
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    Salon de l'Orientation · <span>UIYA</span> · Abidjan – Bouaké · Juillet 2026
+  </footer>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+
+  <!-- ══════════════════════════════════════
+       MODAL WHATSAPP
+  ══════════════════════════════════════ -->
+  <div class="modal-overlay" id="modalWA"
+       role="dialog" aria-modal="true" aria-labelledby="titleWA">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="titleWA">Rejoindre le groupe WhatsApp</h3>
+        <button class="modal-close" onclick="closeWA()" aria-label="Fermer">✕</button>
+      </div>
+
+      <!-- Contenu principal -->
+      <div id="waContent">
+        <div class="wa-steps">
+          <div class="wa-step">
+            <div class="wa-step-num">1</div>
+            <p>Cliquez sur le bouton vert ci-dessous pour ouvrir le lien d'invitation WhatsApp.</p>
+          </div>
+          <div class="wa-step">
+            <div class="wa-step-num">2</div>
+            <p>WhatsApp s'ouvre et affiche la page du groupe <strong>UIYA 2026</strong>.</p>
+          </div>
+          <div class="wa-step">
+            <div class="wa-step-num">3</div>
+            <p>Tapez <strong>"Rejoindre le groupe"</strong> et vous êtes intégré !</p>
+          </div>
+        </div>
+
+       
+        <a class="wa-join-btn"
+           href="https://chat.whatsapp.com/BbNsuZ2uAcX0CyqQEn2Uhf?mode=gi_t"
+           target="_blank"
+           rel="noopener noreferrer"
+           onclick="onWAClick()">
+          💬 &nbsp;Rejoindre le groupe WhatsApp
+        </a>
+      </div>
+
+      <!-- Succès WA -->
+      <div class="success-box" id="waSuccess">
+        <div class="success-icon green">✅</div>
+        <h3>Vous êtes dans le groupe !</h3>
+        <p>Vous recevrez toutes nos actualités directement sur WhatsApp.</p>
+        <p>Passez maintenant à l'étape 2 : votre pré-inscription.</p>
+        <div class="wa-actions">
+          <button class="submit-btn" onclick="closeWA(); openForm();">
+            Faire ma pré-inscription →
+          </button>
+          <button class="submit-btn secondary" onclick="closeWA(); skipPreinscription();">
+            Non merci
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       MODAL PRÉ-INSCRIPTION
+  ══════════════════════════════════════ -->
+  <div class="modal-overlay" id="modalForm"
+       role="dialog" aria-modal="true" aria-labelledby="titleForm">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="titleForm">Pré-inscription UIYA 2026</h3>
+        <button class="modal-close" onclick="closeForm()" aria-label="Fermer">✕</button>
+      </div>
+
+      <!-- Formulaire -->
+      <div id="formContent">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nom">Nom *</label>
+            <input type="text" id="nom" name="nom"
+                   placeholder="Ex : Kouassi" autocomplete="family-name" />
+          </div>
+          <div class="form-group">
+            <label for="prenom">Prénom *</label>
+            <input type="text" id="prenom" name="prenom"
+                   placeholder="Ex : Jean" autocomplete="given-name" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="telephone">Numéro WhatsApp *</label>
+          <input type="tel" id="telephone" name="telephone"
+                 placeholder="+225 07 00 00 00 00" autocomplete="tel" />
+        </div>
+
+        <div class="form-group">
+          <label for="filiere">Filière souhaitée *</label>
+          <select id="filiere" name="filiere">
+            <option value="">-- Sélectionner une filière --</option>
+            <option value="IGL">Génie Logiciel (IGL)</option>
+            <option value="RT">Réseaux &amp; Télécommunications</option>
+            <option value="CM">Commerce &amp; Marketing</option>
+            <option value="CF">Comptabilité &amp; Finance</option>
+            <option value="GRH">Gestion des Ressources Humaines</option>
+            <option value="DA">Droit des Affaires</option>
+            <option value="COM">Communication</option>
+            <option value="AUTRE">Autre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="ville">Ville *</label>
+          <select id="ville" name="ville">
+            <option value="">-- Sélectionner une ville --</option>
+            <option value="Abidjan">Abidjan</option>
+            <option value="Bouaké">Bouaké</option>
+            <option value="Daloa">Daloa</option>
+            <option value="Yamoussoukro">Yamoussoukro</option>
+            <option value="San-Pédro">San-Pédro</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="etablissement">Établissement d'origine *</label>
+          <input type="text" id="etablissement" name="etablissement"
+                 placeholder="Ex : Lycée Technique d'Abidjan" />
+        </div>
+
+        <button class="submit-btn" onclick="submitForm()">
+          Soumettre ma pré-inscription 🚀
+        </button>
+
+      </div>
+
+      <!-- Succès formulaire -->
+      <div class="success-box" id="formSuccess">
+        <div class="success-icon blue">🎉</div>
+        <h3>Pré-inscription enregistrée !</h3>
+        <p>Félicitations ! Votre dossier a bien été reçu.</p>
+        <p>Notre équipe vous contactera très bientôt sur WhatsApp pour la suite.</p>
+        <button class="submit-btn navy" style="margin-top:20px;"
+                onclick="closeForm()">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       SCRIPTS  (type="module" pour Firebase)
+  ══════════════════════════════════════ -->
+  <script type="module" src="app.js"></script>
+
+</body>
+</html>
