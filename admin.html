@@ -1474,13 +1474,14 @@
   //  TABLE VISITEURS
   // ══════════════════════════════════════
   function updateVisiteursTable() {
+    var visitors = allData.filter(d => d.source === 'stand');
     var tbody = document.getElementById("visiteursTable");
-    document.getElementById("countVisiteurs").textContent = allData.length + " visiteur(s) enregistré(s)";
-    if (!allData.length) {
+    document.getElementById("countVisiteurs").textContent = visitors.length + " visiteur(s) enregistré(s)";
+    if (!visitors.length) {
       tbody.innerHTML = '<tr><td colspan="8"><div class="table-empty"><span>📭</span>Aucun visiteur</div></td></tr>';
       return;
     }
-    tbody.innerHTML = allData.map((d, i) => `
+    tbody.innerHTML = visitors.map((d, i) => `
       <tr>
         <td style="color:var(--muted);font-size:12px;">${i+1}</td>
         <td><strong>${d.nom}</strong></td>

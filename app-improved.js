@@ -7,8 +7,10 @@ import { db } from "./firebase-config.js";
 import {
   collection,
   addDoc,
+  getDocs,
   serverTimestamp,
   query,
+  where,
   orderBy,
   onSnapshot,
   doc,
@@ -70,16 +72,92 @@ const Logger = {
 };
 
 let userJoinedWA = false;
+let waVisitorSaved = false;
+let savedVisitorId = null;
 
 function markWAJoined() {
   userJoinedWA = true;
   localStorage.setItem('uiya-wa-joined', '1');
 }
 
+function markVisitorSaved() {
+  waVisitorSaved = true;
+  localStorage.setItem('uiya-wa-visitor-saved', '1');
+  savedVisitorId = null;
+}
+
+function markVisitorSavedWithId(id) {
+  waVisitorSaved = true;
+  savedVisitorId = id;
+  localStorage.setItem('uiya-wa-visitor-saved', '1');
+}
+
+function isVisitorSaved() {
+  return waVisitorSaved || localStorage.getItem('uiya-wa-visitor-saved') === '1';
+}
+
 function getWAStatus() {
   return userJoinedWA || localStorage.getItem('uiya-wa-joined') === '1';
 }
+function setWAJoinEnabled(enabled) {
+  const joinButton = document.getElementById('waJoinButton');
+  if (!joinButton) return;
+  if (enabled) {
+    joinButton.classList.remove('disabled');
+    joinButton.removeAttribute('aria-disabled');
+  } else {
+    joinButton.classList.add('disabled');
+    joinButton.setAttribute('aria-disabled', 'true');
+  }
+}
 
+async function saveVisitorInfo() {
+  const nom = DOM.get('waNom')?.value.trim();
+  const prenom = DOM.get('waPrenom')?.value.trim();
+  const serie = DOM.get('waSerie')?.value.trim();
+  const filiere = DOM.get('waFiliere')?.value.trim();
+
+  if (!nom || !prenom || !serie || !filiere) {
+    notify.error('Veuillez remplir tous les champs avant d’enregistrer.');
+    return;
+  }
+
+  try {
+    // Vérifier doublon visiteur (nom + prenom)
+    try {
+      const qV = query(collection(db, 'preinscriptions'), where('nom', '==', nom), where('prenom', '==', prenom), where('source', '==', 'stand'));
+      const sV = await getDocs(qV);
+      if (!sV.empty) {
+        notify.warning('Une visite avec ce nom et prénom a déjà été enregistrée.');
+        return;
+      }
+    } catch (eDup) {
+      Logger.warn('Erreur vérif doublon visiteur', eDup);
+    }
+
+    const visitorData = {
+      nom,
+      prenom,
+      serie,
+      filiere,
+      groupeWA: false,
+      statut: 'valide',
+      source: 'stand',
+      createdAt: serverTimestamp(),
+      validatedAt: serverTimestamp()
+    };
+
+    const docRef = await addDoc(collection(db, 'preinscriptions'), visitorData);
+    Logger.info('Visiteur stand enregistré', { id: docRef.id, visitorData });
+    notify.success('✅ Visite enregistrée, vous pouvez maintenant rejoindre le groupe WA.');
+    markVisitorSavedWithId(docRef.id);
+    setWAJoinEnabled(true);
+  } catch (error) {
+    Logger.error('Erreur en enregistrant la visite', error);
+    notify.error('Impossible d’enregistrer vos informations. Réessayez.');
+  }
+}
+window.saveVisitorInfo = saveVisitorInfo;
 /* ══════════════════════════════════════════════════════════════
    NOTIFICATION SERVICE
 ══════════════════════════════════════════════════════════════ */
@@ -151,9 +229,9 @@ class FormValidator {
     
     // Téléphone (format Côte d'Ivoire)
     if (!data.telephone || !data.telephone.trim()) {
-      this.errors.telephone = "Téléphone requis";
+      this.errors.telephone = "Téléphone requis (ex: +225700000000)";
     } else if (!this.validatePhone(data.telephone)) {
-      this.errors.telephone = "Format de téléphone invalide";
+      this.errors.telephone = "Format invalide. Utilisez +225 ou 0 suivi du numéro (ex: +225700000000)";
     }
     
     // Filière
@@ -201,6 +279,8 @@ class FormValidator {
         input.classList.add("error");
         input.setAttribute("aria-invalid", "true");
         input.setAttribute("aria-describedby", `${fieldName}-error`);
+        const errEl = document.getElementById(`${fieldName}-error`);
+        if (errEl) errEl.textContent = errorMsg;
       }
     });
   }
@@ -214,6 +294,8 @@ class FormValidator {
       input.classList.remove("error");
       input.removeAttribute("aria-invalid");
       input.removeAttribute("aria-describedby");
+      const errEl = document.getElementById(`${input.id}-error`);
+      if (errEl) errEl.textContent = "";
     });
   }
 }
@@ -295,6 +377,32 @@ class FormService {
       
       // Nettoyer
       data = this.sanitizeData(data);
+
+      // Vérifier les doublons (par téléphone)
+      try {
+        const qTel = query(collection(db, this.COLLECTION), where("telephone", "==", data.telephone));
+        const snapTel = await getDocs(qTel);
+        if (!snapTel.empty) {
+          validator.errors.telephone = "Un dossier existe déjà pour ce numéro de téléphone. Si c'est votre dossier, contactez l'équipe pour mise à jour.";
+          validator.displayErrors("formContent");
+          notify.error('Un dossier existe déjà pour ce numéro de téléphone.');
+          return false;
+        }
+
+        // Vérifier doublons par nom+prénom
+        const qName = query(collection(db, this.COLLECTION), where("nom", "==", data.nom), where("prenom", "==", data.prenom));
+        const snapName = await getDocs(qName);
+        if (!snapName.empty) {
+          validator.errors.nom = "Un dossier portant ce nom et prénom existe déjà.";
+          validator.errors.prenom = "Un dossier portant ce nom et prénom existe déjà.";
+          validator.displayErrors("formContent");
+          notify.error('Un dossier avec ce nom et prénom existe déjà.');
+          return false;
+        }
+      } catch (errDup) {
+        Logger.warn('Erreur vérification doublons', errDup);
+        // ne bloque pas l'envoi si la vérification échoue
+      }
       
       // Désactiver le bouton pendant l'envoi
       const submitBtn = DOM.qs("#formContent .submit-btn");
@@ -428,27 +536,51 @@ window.closeWA = function() {
 };
 
 window.onWAClick = async function() {
+  if (document.getElementById('waJoinButton')?.classList.contains('disabled')) {
+    notify.warning('Veuillez d’abord enregistrer vos informations de visiteur avant de rejoindre le groupe.');
+    return;
+  }
+
   markWAJoined();
   if (formService.lastSubmissionId) {
     try {
-      await updateDoc(doc(db, "preinscriptions", formService.lastSubmissionId), {
+      await updateDoc(doc(db, 'preinscriptions', formService.lastSubmissionId), {
         groupeWA: true,
-        statut: "valide",
+        statut: 'valide',
         validatedAt: serverTimestamp()
       });
-      Logger.info("Dernier dossier mis à jour pour WA", { id: formService.lastSubmissionId });
+      Logger.info('Dernier dossier mis à jour pour WA', { id: formService.lastSubmissionId });
     } catch (error) {
-      Logger.error("Impossible de mettre à jour le dossier WA", error);
+      Logger.error('Impossible de mettre à jour le dossier WA', error);
     }
   }
 
   setTimeout(() => {
-    const waContent = DOM.get("waContent");
-    const waSuccess = DOM.get("waSuccess");
+    const waContent = DOM.get('waContent');
+    const waSuccess = DOM.get('waSuccess');
     
-    if (waContent) waContent.style.display = "none";
-    if (waSuccess) waSuccess.classList.add("active");
+    if (waContent) waContent.style.display = 'none';
+    if (waSuccess) waSuccess.classList.add('active');
   }, 1500);
+};
+window.skipPreinscription = function() {
+  if (!isVisitorSaved()) {
+    // allow skipping but record a visitor placeholder so admin counts them
+    (async () => {
+      try {
+        const placeholder = {
+          nom: 'Visiteur', prenom: 'Anonyme', serie: '', filiere: '',
+          groupeWA: false, statut: 'en_attente', source: 'stand', createdAt: serverTimestamp()
+        };
+        const docRef = await addDoc(collection(db, 'preinscriptions'), placeholder);
+        Logger.info('Visiteur (skip) enregistré', { id: docRef.id });
+        markVisitorSavedWithId(docRef.id);
+      } catch (e) {
+        Logger.error('Erreur en enregistrant visiteur skip', e);
+      }
+    })();
+  }
+  notify.success("Merci pour votre visite. À bientôt sur l'UIYA! 👋");
 };
 
 /* ══════════════════════════════════════════════════════════════

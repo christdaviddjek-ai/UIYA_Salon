@@ -148,24 +148,45 @@
         <div class="wa-steps">
           <div class="wa-step">
             <div class="wa-step-num">1</div>
-            <p>Cliquez sur le bouton vert ci-dessous pour ouvrir le lien d'invitation WhatsApp.</p>
+            <p>Enregistrez d'abord vos informations de visiteur avant d'intégrer le groupe.</p>
           </div>
           <div class="wa-step">
             <div class="wa-step-num">2</div>
-            <p>WhatsApp s'ouvre et affiche la page du groupe <strong>UIYA 2026</strong>.</p>
+            <p>Nous gardons votre nom, prénom, série et filière souhaitée pour le suivi.</p>
           </div>
           <div class="wa-step">
             <div class="wa-step-num">3</div>
-            <p>Tapez <strong>"Rejoindre le groupe"</strong> et vous êtes intégré !</p>
+            <p>Ensuite cliquez sur le lien WhatsApp pour rejoindre le groupe.</p>
           </div>
         </div>
 
-        <a class="wa-join-btn"
+        <form id="visitorForm" class="wa-visitor-form" onsubmit="event.preventDefault(); saveVisitorInfo();">
+          <div class="form-row">
+            <label for="waNom">Nom</label>
+            <input id="waNom" type="text" placeholder="Ex : Kouassi" required />
+          </div>
+          <div class="form-row">
+            <label for="waPrenom">Prénom</label>
+            <input id="waPrenom" type="text" placeholder="Ex : Jean" required />
+          </div>
+          <div class="form-row">
+            <label for="waSerie">Série</label>
+            <input id="waSerie" type="text" placeholder="Ex : S, L, STI" required />
+          </div>
+          <div class="form-row">
+            <label for="waFiliere">Filière souhaitée</label>
+            <input id="waFiliere" type="text" placeholder="Ex : IGL, RT, CM" required />
+          </div>
+          <button class="submit-btn" type="submit">Enregistrer ma visite</button>
+        </form>
+
+        <a class="wa-join-btn disabled" id="waJoinButton"
            href="https://chat.whatsapp.com/BbNsuZ2uAcX0CyqQEn2Uhf?mode=gi_t"
            target="_blank"
            rel="noopener noreferrer"
            onclick="onWAClick()"
-           aria-label="Ouvrir le lien WhatsApp dans une nouvelle fenêtre">
+           aria-label="Ouvrir le lien WhatsApp dans une nouvelle fenêtre"
+           aria-disabled="true">
           💬 &nbsp;Rejoindre le groupe WhatsApp
         </a>
       </div>
@@ -274,6 +295,7 @@
               <span class="form-label-text">Filière souhaitée</span>
               <span class="form-required" aria-label="obligatoire">*</span>
             </label>
+            <div class="select-wrap">
             <select 
               id="filiere" 
               name="filiere"
@@ -282,15 +304,13 @@
               aria-label="Choisir votre filière"
               aria-required="true">
               <option value="">-- Sélectionner une filière --</option>
-              <option value="IGL">Génie Logiciel (IGL)</option>
-              <option value="RT">Réseaux &amp; Télécommunications</option>
-              <option value="CM">Commerce &amp; Marketing</option>
-              <option value="CF">Comptabilité &amp; Finance</option>
-              <option value="GRH">Gestion des Ressources Humaines</option>
-              <option value="DA">Droit des Affaires</option>
-              <option value="COM">Communication</option>
-              <option value="AUTRE">Autre</option>
+              <option value="IGL">IGL</option>
+              <option value="COM">COM</option>
+              <option value="DROIT">DROIT</option>
+              <option value="ANGLAIS">Anglais</option>
+              <option value="SEG">SEG</option>
             </select>
+            </div>
             <span class="form-error" id="filiere-error" role="alert"></span>
           </div>
 

@@ -618,6 +618,57 @@ body {
   margin-bottom: 18px;
 }
 
+/* Stylisation spécifique pour les selects (filière) */
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Wrapper pour ajouter une icône déroulante propre */
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--text-muted);
+}
+
+select.form-input:focus,
+input.form-input:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 6px 20px rgba(10,30,110,0.08);
+}
+
+.form-input.error {
+  border-color: var(--error);
+  box-shadow: 0 6px 18px rgba(231, 76, 60, 0.06);
+}
+
+/* Small visual tweak for disabled/placeholder option */
+select.form-input option[value=""] {
+  color: var(--text-muted);
+}
+
 .form-group label {
   display: flex;
   align-items: center;
@@ -866,6 +917,65 @@ body {
 
 .wa-join-btn:active {
   transform: translateY(0);
+}
+
+.wa-visitor-form {
+  display: grid;
+  gap: 14px;
+  margin: 24px 0 18px;
+}
+
+.wa-visitor-form .form-row {
+  display: grid;
+  gap: 8px;
+}
+
+.wa-visitor-form label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.wa-visitor-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 44, 86, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wa-visitor-form input:focus {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 2px rgba(10, 30, 110, 0.08);
+}
+
+.wa-visitor-form .submit-btn {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: none;
+  background: var(--blue);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wa-visitor-form .submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(10, 30, 110, 0.15);
+}
+
+.wa-join-btn.disabled {
+  pointer-events: none;
+  background: rgba(37, 211, 102, 0.35);
+  box-shadow: none;
+  opacity: 0.65;
 }
 
 .wa-actions {
