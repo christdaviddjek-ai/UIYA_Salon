@@ -69,6 +69,17 @@ const Logger = {
   }
 };
 
+let userJoinedWA = false;
+
+function markWAJoined() {
+  userJoinedWA = true;
+  localStorage.setItem('uiya-wa-joined', '1');
+}
+
+function getWAStatus() {
+  return userJoinedWA || localStorage.getItem('uiya-wa-joined') === '1';
+}
+
 /* ══════════════════════════════════════════════════════════════
    NOTIFICATION SERVICE
 ══════════════════════════════════════════════════════════════ */
@@ -217,6 +228,7 @@ class FormService {
   constructor() {
     this.COLLECTION = "preinscriptions";
     this.isSubmitting = false;
+    this.lastSubmissionId = null;
   }
   
   /**
@@ -295,14 +307,16 @@ class FormService {
         
         try {
           // Ajouter à Firestore
-          await addDoc(collection(db, this.COLLECTION), {
+          const docRef = await addDoc(collection(db, this.COLLECTION), {
             ...data,
-            groupeWA: false,
-            statut: "en_attente",
-            createdAt: serverTimestamp()
+            groupeWA: getWAStatus(),
+            statut: "valide",
+            createdAt: serverTimestamp(),
+            validatedAt: serverTimestamp()
           });
+          this.lastSubmissionId = docRef.id;
           
-          Logger.info("Form submitted successfully", data);
+          Logger.info("Form submitted successfully", { id: docRef.id, ...data });
           
           // Afficher le succès
           const formContent = DOM.get("formContent");
@@ -413,7 +427,21 @@ window.closeWA = function() {
   if (waSuccess) waSuccess.classList.remove("active");
 };
 
-window.onWAClick = function() {
+window.onWAClick = async function() {
+  markWAJoined();
+  if (formService.lastSubmissionId) {
+    try {
+      await updateDoc(doc(db, "preinscriptions", formService.lastSubmissionId), {
+        groupeWA: true,
+        statut: "valide",
+        validatedAt: serverTimestamp()
+      });
+      Logger.info("Dernier dossier mis à jour pour WA", { id: formService.lastSubmissionId });
+    } catch (error) {
+      Logger.error("Impossible de mettre à jour le dossier WA", error);
+    }
+  }
+
   setTimeout(() => {
     const waContent = DOM.get("waContent");
     const waSuccess = DOM.get("waSuccess");
