@@ -1157,31 +1157,137 @@ select.form-input option[value=""] {
 /* ══════════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .cards {
+    max-width: 100%;
+    padding: 24px 16px 20px;
+  }
+  .card {
+    padding: 24px 20px;
+  }
+  .steps {
+    justify-content: center;
+  }
+  .step {
+    width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+  .logo-box {
+    margin: 0 auto;
+  }
+  .header-text h1 {
+    font-size: 20px;
+  }
+  .header-text p {
+    font-size: 13px;
+  }
+  .steps {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .step-line {
+    display: none;
+  }
+  .cards {
+    padding: 24px 18px 16px;
+  }
+  .card {
+    width: 100%;
+    min-width: auto;
+  }
+  .card-btn,
+  .card-btn-secondary {
+    width: 100%;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .form-group label {
+    font-size: 10px;
+  }
+  .footer {
+    font-size: 11px;
+    padding: 20px 14px 28px;
+  }
+}
+
 @media (max-width: 480px) {
+  .header {
+    padding: 24px 18px 22px;
+  }
+  .header-inner {
+    gap: 14px;
+  }
   .header-text h1 {
     font-size: 18px;
   }
-  
   .welcome h2 {
     font-size: 22px;
   }
-  
+  .welcome p {
+    font-size: 14px;
+    max-width: 100%;
+  }
+  .card {
+    border-radius: 24px;
+    padding: 20px;
+  }
+  .card-icon {
+    width: 48px;
+    height: 48px;
+  }
+  .card h3 {
+    font-size: 16px;
+  }
+  .card p {
+    font-size: 13px;
+  }
+  .card-btn {
+    font-size: 14px;
+    padding: 14px 16px;
+  }
   .form-row {
     grid-template-columns: 1fr;
-    gap: 12px;
   }
-  
   .modal {
     max-width: 100%;
     border-radius: 24px 24px 0 0;
+    padding: 22px 18px 24px;
+    margin: 0 10px;
   }
-  
-  .steps {
-    flex-wrap: wrap;
+  .modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
-  
-  .step-line {
-    display: none;
+  .modal-header h3 {
+    font-size: 20px;
+  }
+  .form-group input,
+  .form-group select,
+  .wa-visitor-form input {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+  .select-wrap::after {
+    right: 14px;
+  }
+  .wa-steps {
+    gap: 12px;
+  }
+  .wa-step {
+    padding: 12px 0;
+  }
+  .wa-actions {
+    gap: 10px;
   }
 }
 
@@ -1189,18 +1295,18 @@ select.form-input option[value=""] {
   .header-text h1 {
     font-size: 16px;
   }
-  
   .welcome h2 {
     font-size: 20px;
   }
-  
-  .card {
-    padding: 20px;
+  .card-btn,
+  .card-btn-secondary {
+    font-size: 13px;
+    padding: 12px 14px;
   }
-  
   .form-group input,
-  .form-group select {
-    padding: 11px 14px;
+  .form-group select,
+  .wa-visitor-form input {
+    padding: 10px 12px;
     font-size: 13px;
   }
 }

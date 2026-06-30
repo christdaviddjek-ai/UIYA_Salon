@@ -912,6 +912,9 @@
         <p id="pageSubtitle">Tableau de bord – Salon de l'Orientation 2026</p>
       </div>
       <div class="topbar-right">
+        <button class="btn-export red" onclick="resetTestData()" title="Supprimer toutes les données de test">
+          🔄 Réinitialiser les tests
+        </button>
         <div class="admin-badge">
           <div class="admin-avatar"><i data-feather="user"></i></div>
           <span id="adminName">Admin</span>
@@ -1186,7 +1189,7 @@
 <script type="module">
   import { db } from "./firebase-config.js";
   import {
-    collection, addDoc, getDocs, onSnapshot,
+    collection, addDoc, getDocs, deleteDoc, onSnapshot,
     query, orderBy, serverTimestamp, where, doc, setDoc, getDoc
   } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
   import {
@@ -1589,6 +1592,30 @@
       d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString("fr-FR") : "–"
     ]);
     downloadCSV(toCSV(headers, rows), "export_complet_uiya_2026.csv");
+  };
+
+  window.resetTestData = async function () {
+    var confirmation = confirm("Réinitialiser toutes les données de test ? Cette action supprime définitivement tous les enregistrements de la collection pré-inscriptions.");
+    if (!confirmation) return;
+
+    try {
+      var snap = await getDocs(collection(db, "preinscriptions"));
+      if (snap.empty) {
+        showToast("Aucune donnée à supprimer.", "warning");
+        return;
+      }
+
+      var deleteCount = 0;
+      for (var docItem of snap.docs) {
+        await deleteDoc(doc(db, "preinscriptions", docItem.id));
+        deleteCount += 1;
+      }
+
+      showToast(`✅ ${deleteCount} document(s) supprimé(s).`, "success");
+    } catch (error) {
+      console.error("Erreur réinitialisation tests", error);
+      showToast("Erreur lors de la réinitialisation. Vérifiez la console.", "error");
+    }
   };
 
   // ══════════════════════════════════════
