@@ -15,7 +15,7 @@
         rel="stylesheet" />
 
   <!-- Lucide Icons -->
-  <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+  <script src="lucide.min.js"></script>
 
   <!-- DOMPurify para sanitization -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
@@ -383,7 +383,14 @@
   
   <!-- Initialiser Lucide Icons -->
   <script>
-    lucide.createIcons();
+    (function () {
+      const api = window.lucide || window.Lucide;
+      if (api && typeof api.createIcons === 'function') {
+        api.createIcons();
+      } else {
+        console.warn('Lucide icons not loaded');
+      }
+    })();
   </script>
 
   <!-- Firebase + App Logic (type="module") -->

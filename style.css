@@ -70,8 +70,13 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  min-width: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  min-width: 0;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -114,6 +119,12 @@ body {
   display: flex;
   align-items: center;
   gap: 20px;
+  min-width: 0;
+}
+
+.header-text {
+  min-width: 0;
+  flex: 1;
 }
 
 .logo-box {
@@ -958,7 +969,7 @@ select.form-input option[value=""] {
   padding: 14px 18px;
   border-radius: 14px;
   border: none;
-  background: var(--blue);
+  background: var(--navy);
   color: #fff;
   font-size: 15px;
   font-weight: 700;
@@ -1292,28 +1303,126 @@ select.form-input option[value=""] {
 }
 
 @media (max-width: 360px) {
+  body,
+  html {
+    min-width: 0;
+  }
+
+  .header {
+    padding: 22px 14px 20px;
+  }
+
+  .header-inner {
+    gap: 12px;
+  }
+
   .header-text h1 {
     font-size: 16px;
   }
+
+  .header-text p {
+    font-size: 12px;
+  }
+
+  .welcome {
+    padding: 24px 14px 14px;
+  }
+
   .welcome h2 {
     font-size: 20px;
   }
+
+  .welcome p {
+    font-size: 13px;
+    max-width: 100%;
+  }
+
+  .steps {
+    padding: 18px 14px 0;
+  }
+
+  .step {
+    width: 70px;
+    gap: 6px;
+  }
+
+  .step-label {
+    font-size: 10px;
+  }
+
+  .step-line {
+    display: none;
+  }
+
+  .cards {
+    padding: 20px 12px 16px;
+    gap: 14px;
+    margin: 0 4px;
+  }
+
+  .card {
+    padding: 18px 16px;
+    border-radius: 20px;
+  }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .card h3 {
+    font-size: 15px;
+  }
+
+  .card p {
+    font-size: 12px;
+  }
+
   .card-btn,
   .card-btn-secondary {
+    width: 100%;
     font-size: 13px;
     padding: 12px 14px;
   }
+
   .form-group input,
   .form-group select,
   .wa-visitor-form input {
     padding: 10px 12px;
     font-size: 13px;
   }
+
+  .form-group label {
+    font-size: 10px;
+  }
+
+  .select-wrap::after {
+    right: 12px;
+  }
+
+  .modal {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 16px 22px;
+    margin: 0 8px;
+  }
+
+  .modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .toast {
+    left: 50%;
+    width: calc(100% - 24px);
+    max-width: 340px;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
    UTILITIES
-══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════════════════ */
 .hidden {
   display: none !important;
 }
