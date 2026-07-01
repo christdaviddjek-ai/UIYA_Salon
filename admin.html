@@ -1027,12 +1027,6 @@
           <div class="stat-label">Dossiers validés</div>
           <div class="stat-sub"><span class="dot"></span> Temps réel</div>
         </div>
-        <div class="stat-card orange">
-          <div class="stat-icon"><i data-lucide="message-square"></i></div>
-          <div class="stat-value" id="stat-wa">–</div>
-          <div class="stat-label">Dans le groupe WA</div>
-          <div class="stat-sub"><span class="dot"></span> Temps réel</div>
-        </div>
       </div>
 
       <!-- Graphiques -->
@@ -1123,7 +1117,6 @@
                 <th>Filière</th>
                 <th>Ville</th>
                 <th>Établissement</th>
-                <th>Groupe WA</th>
                 <th>Statut</th>
                 <th>Date</th>
               </tr>
@@ -1160,7 +1153,6 @@
                 <th>Téléphone</th>
                 <th>Ville</th>
                 <th>Établissement</th>
-                <th>Groupe WA</th>
                 <th>Date visite</th>
               </tr>
             </thead>
@@ -1195,11 +1187,11 @@
           <div style="font-size:36px;margin-bottom:14px;color:var(--navy);">
             <i data-lucide="users"></i>
           </div>
-          <h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;">
+          <h3 style="font-size:16px;font-weight:700;cologir:var(--navy);margin-bottom:8px;">
             Liste des visiteurs
           </h3>
           <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">
-            Tous les visiteurs du stand avec leurs informations et statut groupe WhatsApp.
+            Tous les visiteurs du stand avec leurs informations de contact.
           </p>
           <button class="btn-export blue" style="width:100%;justify-content:center;">
             <i data-lucide="download"></i> Télécharger CSV
@@ -1453,12 +1445,10 @@
     var visitors   = allData.filter(d => d.source === 'stand').length;
     var preinscrit = allData.filter(d => !d.source && (d.statut === "en_attente" || d.statut === "valide")).length;
     var valide     = allData.filter(d => !d.source && d.statut === "valide").length;
-    var wa         = allData.filter(d => isTrueValue(d.groupeWA)).length;
 
     animCount("stat-total",      visitors);
     animCount("stat-preinscrit", preinscrit);
     animCount("stat-valide",     valide);
-    animCount("stat-wa",         wa);
   }
 
   function animCount(id, target) {
@@ -1576,9 +1566,8 @@
     renderPreinscritTable(preinscriptions);
     var count = preinscriptions.length;
     var valide = preinscriptions.filter(d => d.statut === "valide").length;
-    var wa = preinscriptions.filter(d => isTrueValue(d.groupeWA)).length;
     document.getElementById("countPreinscrit").textContent =
-      count + " dossier(s) enregistré(s) • " + valide + " validé(s) • " + wa + " WA";
+      count + " dossier(s) enregistré(s) • " + valide + " validé(s)";
   }
 
   function renderPreinscritTable(data) {
@@ -1596,7 +1585,6 @@
         <td>${d.filiere || "–"}</td>
         <td>${d.ville || "–"}</td>
         <td style="font-size:12px;">${d.etablissement || "–"}</td>
-        <td>${isTrueValue(d.groupeWA) ? '✅' : '⏳'}</td>
         <td><span class="badge-statut ${d.statut === 'valide' ? 'valide' : d.statut === 'refuse' ? 'refuse' : 'attente'}">
           ${d.statut === 'valide' ? 'Validé' : d.statut === 'refuse' ? 'Refusé' : 'En attente'}
         </span></td>
@@ -1623,7 +1611,6 @@
         <td>${d.telephone}</td>
         <td>${d.ville || "–"}</td>
         <td style="font-size:12px;">${d.etablissement || "–"}</td>
-        <td>${isTrueValue(d.groupeWA) ? '✅ Ajouté' : '⏳ En attente'}</td>
         <td style="font-size:12px;">${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString('fr-FR') : "–"}</td>
       </tr>`).join("");
   }
@@ -1719,7 +1706,7 @@
     var headers = ["#","Nom","Prénom","Téléphone","Filière","Ville","Établissement","Groupe WA","Statut","Date"];
     var rows = allData.map((d, i) => [
       i+1, d.nom, d.prenom, d.telephone, d.filiere || "–", d.ville,
-      d.etablissement, d.groupeWA ? "Oui" : "Non",
+      d.etablissement, isTrueValue(d.groupeWA) ? "Oui" : "Non",
       d.statut === "valide" ? "Validé" : d.statut === "refuse" ? "Refusé" : "En attente",
       d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString("fr-FR") : "–"
     ]);
