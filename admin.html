@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     /* ══════════════════════════════════════
@@ -1040,7 +1041,7 @@
         <div class="chart-card">
           <div class="chart-title"><i data-lucide="map-pin"></i> Visiteurs par ville</div>
           <div class="bar-chart" id="barChart">
-            <div class="loader-wrap"><div class="loader"></div></div>
+            <canvas id="visitorsCityChart" style="width:100%;height:260px"></canvas>
           </div>
         </div>
 
@@ -1048,7 +1049,7 @@
         <div class="chart-card">
           <div class="chart-title"><i data-lucide="target"></i> Top filières demandées</div>
           <div class="donut-list" id="filiereChart">
-            <div class="loader-wrap"><div class="loader"></div></div>
+            <canvas id="filieresBarChart" style="width:100%;height:260px"></canvas>
           </div>
         </div>
       </div>
@@ -1176,7 +1177,9 @@
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">
 
         <div class="chart-card" style="cursor:pointer;" onclick="exportPreinscriptions()">
-          <div style="font-size:36px;margin-bottom:14px;">📋</div>
+          <div style="font-size:36px;margin-bottom:14px;color:var(--navy);">
+            <i data-lucide="file-text"></i>
+          </div>
           <h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;">
             Liste des pré-inscrits
           </h3>
@@ -1184,12 +1187,14 @@
             Toutes les pré-inscriptions avec nom, prénom, téléphone, filière, ville et établissement.
           </p>
           <button class="btn-export green" style="width:100%;justify-content:center;">
-            📥 Télécharger CSV
+            <i data-lucide="download"></i> Télécharger CSV
           </button>
         </div>
 
         <div class="chart-card" style="cursor:pointer;" onclick="exportVisiteurs()">
-          <div style="font-size:36px;margin-bottom:14px;">👥</div>
+          <div style="font-size:36px;margin-bottom:14px;color:var(--navy);">
+            <i data-lucide="users"></i>
+          </div>
           <h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;">
             Liste des visiteurs
           </h3>
@@ -1197,12 +1202,14 @@
             Tous les visiteurs du stand avec leurs informations et statut groupe WhatsApp.
           </p>
           <button class="btn-export blue" style="width:100%;justify-content:center;">
-            📥 Télécharger CSV
+            <i data-lucide="download"></i> Télécharger CSV
           </button>
         </div>
 
         <div class="chart-card" style="cursor:pointer;" onclick="exportComplet()">
-          <div style="font-size:36px;margin-bottom:14px;">📦</div>
+          <div style="font-size:36px;margin-bottom:14px;color:var(--navy);">
+            <i data-lucide="package"></i>
+          </div>
           <h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;">
             Export complet
           </h3>
@@ -1210,7 +1217,7 @@
             Toutes les données combinées : visiteurs + pré-inscriptions en un seul fichier CSV.
           </p>
           <button class="btn-export green" style="width:100%;justify-content:center;background:var(--navy);color:#fff;border-color:var(--navy);">
-            📥 Télécharger tout
+            <i data-lucide="download"></i> Télécharger tout
           </button>
         </div>
 
@@ -1252,7 +1259,7 @@
         </div>
 
         <div class="accounts-list">
-          <h3>👥 Comptes créés</h3>
+          <h3><i data-lucide="users"></i> Comptes créés</h3>
           <div id="accountsList">
             <div class="loader-wrap"><div class="loader"></div></div>
           </div>
@@ -1287,6 +1294,8 @@
   let allUsers = [];  // cache des comptes
 
   const COLORS = ["#0A1E6E","#C0392B","#27ae60","#e67e22","#8e44ad","#2980b9"];
+  let cityChart = null;
+  let filieresChart = null;
 
   function isTrueValue(value) {
     return value === true
@@ -1486,42 +1495,78 @@
   }
 
   // ══════════════════════════════════════
-  //  BAR CHART (villes)
+  //  BAR CHART (villes) → PIE CHART (Chart.js)
   // ══════════════════════════════════════
   function updateBarChart() {
     var villes = {};
-    allData.forEach(d => { villes[d.ville] = (villes[d.ville] || 0) + 1; });
-    var max = Math.max(...Object.values(villes), 1);
-    var html = Object.entries(villes).map(([v, n]) => `
-      <div class="bar-item">
-        <div class="bar-val">${n}</div>
-        <div class="bar filled" style="height:${Math.round((n/max)*120)}px"></div>
-        <div class="bar-lbl">${v}</div>
-      </div>`).join("");
-    document.getElementById("barChart").innerHTML = html || '<p style="color:var(--muted);font-size:13px;">Aucune donnée</p>';
+    allData.forEach(d => { if (d.ville) villes[d.ville] = (villes[d.ville] || 0) + 1; });
+    var labels = Object.keys(villes);
+    var data = labels.map(l => villes[l]);
+    var container = document.getElementById('barChart');
+    if (!labels.length) {
+      container.innerHTML = '<p style="color:var(--muted);font-size:13px;">Aucune donnée</p>';
+      if (cityChart) { cityChart.destroy(); cityChart = null; }
+      return;
+    }
+    // ensure canvas present
+    var canvas = document.getElementById('visitorsCityChart');
+    if (!canvas) {
+      container.innerHTML = '<canvas id="visitorsCityChart" style="width:100%;height:260px"></canvas>';
+      canvas = document.getElementById('visitorsCityChart');
+    }
+    var ctx = canvas.getContext('2d');
+    var bg = labels.map((_,i) => COLORS[i % COLORS.length]);
+    if (cityChart) {
+      cityChart.data.labels = labels;
+      cityChart.data.datasets[0].data = data;
+      cityChart.update();
+    } else {
+      cityChart = new Chart(ctx, {
+        type: 'pie',
+        data: { labels: labels, datasets: [{ data: data, backgroundColor: bg }] },
+        options: { responsive: true, plugins: { legend: { position: 'right' } } }
+      });
+    }
   }
+  // Exposer pour la console
+  window.updateBarChart = updateBarChart;
 
   // ══════════════════════════════════════
-  //  FILIÈRE CHART
+  //  FILIÈRE CHART → BAR CHART (Chart.js)
   // ══════════════════════════════════════
   function updateFiliereChart() {
     var filieres = {};
-    allData.forEach(d => { filieres[d.filiere] = (filieres[d.filiere] || 0) + 1; });
-    var sorted = Object.entries(filieres).sort((a,b) => b[1]-a[1]).slice(0, 5);
-    var max = sorted[0] ? sorted[0][1] : 1;
-    var html = sorted.map(([f, n], i) => `
-      <div class="donut-item" style="flex-direction:column;align-items:flex-start;">
-        <div style="display:flex;align-items:center;gap:10px;width:100%;margin-bottom:4px;">
-          <div class="donut-dot" style="background:${COLORS[i]}"></div>
-          <span class="donut-lbl">${f}</span>
-          <span class="donut-val">${n}</span>
-        </div>
-        <div class="donut-bar" style="width:100%">
-          <div class="donut-fill" style="width:${Math.round((n/max)*100)}%;background:${COLORS[i]}"></div>
-        </div>
-      </div>`).join("");
-    document.getElementById("filiereChart").innerHTML = html || '<p style="color:var(--muted);font-size:13px;">Aucune donnée</p>';
+    allData.forEach(d => { if (d.filiere) filieres[d.filiere] = (filieres[d.filiere] || 0) + 1; });
+    var sorted = Object.entries(filieres).sort((a,b) => b[1]-a[1]).slice(0, 10);
+    var labels = sorted.map(s => s[0]);
+    var data = sorted.map(s => s[1]);
+    var container = document.getElementById('filiereChart');
+    if (!labels.length) {
+      container.innerHTML = '<p style="color:var(--muted);font-size:13px;">Aucune donnée</p>';
+      if (filieresChart) { filieresChart.destroy(); filieresChart = null; }
+      return;
+    }
+    var canvas = document.getElementById('filieresBarChart');
+    if (!canvas) {
+      container.innerHTML = '<canvas id="filieresBarChart" style="width:100%;height:260px"></canvas>';
+      canvas = document.getElementById('filieresBarChart');
+    }
+    var ctx = canvas.getContext('2d');
+    var bg = labels.map((_,i) => COLORS[i % COLORS.length]);
+    if (filieresChart) {
+      filieresChart.data.labels = labels;
+      filieresChart.data.datasets[0].data = data;
+      filieresChart.update();
+    } else {
+      filieresChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ label: 'Demandes', data: data, backgroundColor: bg }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+    }
   }
+  // Exposer pour la console
+  window.updateFiliereChart = updateFiliereChart;
 
   // ══════════════════════════════════════
   //  TABLE PRÉ-INSCRIPTIONS
