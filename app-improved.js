@@ -84,6 +84,8 @@ let userJoinedWA = false;
 let waVisitorSaved = false;
 let savedVisitorId = null;
 let forceWAFormMode = false;
+let isVisitorSubmitting = false;
+let isPreregSubmitting = false;
 
 function clearVisitorSavedState() {
   waVisitorSaved = false;
@@ -452,19 +454,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   
   // Visitor Form Submit
-  const visitorForm = document.getElementById('visitorForm');
+  const visitorForm = document.getElementById(FORM_IDS.visitor);
   if (visitorForm) {
     visitorForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (isVisitorSubmitting) return;
+      isVisitorSubmitting = true;
       await saveVisitorInfo();
+      isVisitorSubmitting = false;
     });
   }
   
   // Pre-registration Form Submit
-  const preregForm = document.getElementById('preregForm');
+  const preregForm = document.getElementById(FORM_IDS.prereg);
   if (preregForm) {
     preregForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (isPreregSubmitting) return;
+      isPreregSubmitting = true;
       
       const result = await FormService.submit(
         'preregForm',
@@ -494,6 +501,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             Logger.error('Pre-registration error', error);
             notify.error('Erreur lors de la préinscription.');
             return false;
+          } finally {
+            isPreregSubmitting = false;
           }
         }
       );
@@ -544,9 +553,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Expose for HTML onclick handlers
 window.submitForm = async () => {
-  const preregForm = document.getElementById('preregForm');
+  const preregForm = document.getElementById(FORM_IDS.prereg);
   if (preregForm) {
-    preregForm.dispatchEvent(new Event('submit'));
+    if (typeof preregForm.requestSubmit === 'function') {
+      preregForm.requestSubmit();
+    } else {
+      preregForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    }
   }
 };
 
