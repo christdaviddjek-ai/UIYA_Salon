@@ -1476,8 +1476,8 @@
   // ══════════════════════════════════════
   function updateStats() {
     var visitors   = allData.filter(d => d.source === 'stand').length;
-    var preinscrit = allData.filter(d => !d.source && (d.statut === "en_attente" || d.statut === "valide")).length;
-    var valide     = allData.filter(d => !d.source && d.statut === "valide").length;
+    var preinscrit = allData.filter(d => d.source !== 'stand' && (d.statut === "en_attente" || d.statut === "valide")).length;
+    var valide     = allData.filter(d => d.source !== 'stand' && d.statut === "valide").length;
 
     animCount("stat-total",      visitors);
     animCount("stat-preinscrit", preinscrit);
@@ -1509,7 +1509,7 @@
   // ══════════════════════════════════════
   function updateRecentTable() {
     var tbody = document.getElementById("recentTable");
-    var recent = allData.filter(d => !d.source).slice(0, 10);
+    var recent = allData.filter(d => d.source !== 'stand').slice(0, 10);
     if (!recent.length) {
       tbody.innerHTML = '<tr><td colspan="5"><div class="table-empty"><span>📭</span>Aucune donnée pour l\'instant</div></td></tr>';
       return;
@@ -1607,7 +1607,7 @@
   //  TABLE PRÉ-INSCRIPTIONS
   // ══════════════════════════════════════
   function updatePreinscritTable() {
-    var preinscriptions = allData.filter(d => !d.source);
+    var preinscriptions = allData.filter(d => d.source !== 'stand');
     renderPreinscritTable(preinscriptions);
     var count = preinscriptions.length;
     var valide = preinscriptions.filter(d => d.statut === "valide").length;
@@ -1681,7 +1681,7 @@
     var search = document.getElementById("searchPreinscrit").value.toLowerCase();
     var ville  = document.getElementById("filterVillePreinscrit").value;
     var statut = document.getElementById("filterStatut").value;
-    var filtered = allData.filter(d => !d.source).filter(d => {
+    var filtered = allData.filter(d => d.source !== 'stand').filter(d => {
       var name = (d.nom + " " + d.prenom).toLowerCase();
       return (!search || name.includes(search))
           && (!ville  || d.ville === ville)
@@ -1689,7 +1689,7 @@
     });
     renderPreinscritTable(filtered);
     document.getElementById("countPreinscrit").textContent =
-      filtered.length + " dossier(s) trouvé(s) / " + allData.filter(d => !d.source).length + " total(s)";
+      filtered.length + " dossier(s) trouvé(s) / " + allData.filter(d => d.source !== 'stand').length + " total(s)";
   };
 
   // ══════════════════════════════════════
