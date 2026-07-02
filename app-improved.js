@@ -271,7 +271,7 @@ class FormValidator {
   
   static validatePhone(phone) {
     if (!phone) return false;
-    const regex = /^(\+225[01-9][0-9]{8}|0[1-9][0-9]{8,9})$/;
+    const regex = /^(\+225[0-9]{8}|[0-9]{8})$/;
     return regex.test(phone.replace(/[\s\-\.]/g, ''));
   }
 
@@ -297,9 +297,9 @@ class FormValidator {
       input.classList.remove('error');
       input.removeAttribute('aria-invalid');
       
-      const errorDiv = input.nextElementSibling;
-      if (errorDiv?.classList.contains('error-msg')) {
-        errorDiv.remove();
+      const errorSpan = input.parentNode.querySelector('.form-error, .error-msg');
+      if (errorSpan) {
+        errorSpan.textContent = '';
       }
     });
     
@@ -309,10 +309,15 @@ class FormValidator {
         input.classList.add('error');
         input.setAttribute('aria-invalid', 'true');
         
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-msg';
-        errorDiv.textContent = errors[fieldName];
-        input.parentNode.appendChild(errorDiv);
+        const errorSpan = input.parentNode.querySelector('.form-error');
+        if (errorSpan) {
+          errorSpan.textContent = errors[fieldName];
+        } else {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error-msg';
+          errorDiv.textContent = errors[fieldName];
+          input.parentNode.appendChild(errorDiv);
+        }
       }
     });
   }
