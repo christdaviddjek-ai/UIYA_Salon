@@ -74,9 +74,17 @@ const Logger = {
 let userJoinedWA = false;
 let waVisitorSaved = false;
 let savedVisitorId = null;
+let forceWAFormMode = false;
+
+function clearVisitorSavedState() {
+  waVisitorSaved = false;
+  savedVisitorId = null;
+  localStorage.removeItem('uiya-wa-visitor-saved');
+}
 
 function markWAJoined() {
   userJoinedWA = true;
+  forceWAFormMode = false;
   localStorage.setItem('uiya-wa-joined', '1');
   updateWAModalUI();
 }
@@ -118,16 +126,17 @@ function updateWAModalUI() {
   const waSuccess = DOM.get('waSuccess');
   const joined = getWAStatus();
   const visitorSaved = isVisitorSaved();
+  const showForm = forceWAFormMode || !joined;
 
   if (waContent && waSuccess) {
-    if (joined) {
-      waContent.classList.add('hidden');
-      waSuccess.classList.add('active');
-      setWAJoinEnabled(false);
-    } else {
+    if (showForm) {
       waContent.classList.remove('hidden');
       waSuccess.classList.remove('active');
       setWAJoinEnabled(visitorSaved);
+    } else {
+      waContent.classList.add('hidden');
+      waSuccess.classList.add('active');
+      setWAJoinEnabled(false);
     }
   }
 }
@@ -265,7 +274,20 @@ class FormValidator {
     const regex = /^(\+225[01-9][0-9]{8}|0[1-9][0-9]{8,9})$/;
     return regex.test(phone.replace(/[\s\-\.]/g, ''));
   }
-  
+
+  static normalizePhone(phone) {
+    if (!phone) return '';
+    let normalized = phone.replace(/[^0-9]/g, '');
+    if (normalized.startsWith('225')) {
+      normalized = normalized.slice(3);
+    }
+    return normalized;
+  }
+
+  static normalizeText(value) {
+    return value ? value.trim().toLowerCase() : '';
+  }
+
   static displayErrors(formId, errors) {
     const form = document.getElementById(formId);
     if (!form) return;
@@ -293,6 +315,40 @@ class FormValidator {
         input.parentNode.appendChild(errorDiv);
       }
     });
+  }
+}
+
+async function isDuplicatePreregistration(telephoneNormalized) {
+  if (!telephoneNormalized) return false;
+
+  try {
+    const duplicateQuery = query(
+      collection(db, 'preinscriptions'),
+      where('telephoneNormalized', '==', telephoneNormalized)
+    );
+    const duplicateSnap = await getDocs(duplicateQuery);
+    return !duplicateSnap.empty;
+  } catch (error) {
+    Logger.error('Erreur en vérifiant les doublons de préinscription', error);
+    return false;
+  }
+}
+
+function showPreregSuccess() {
+  const formContent = DOM.get('formContent');
+  const formSuccess = DOM.get('formSuccess');
+  if (formContent && formSuccess) {
+    formContent.classList.add('hidden');
+    formSuccess.classList.add('active');
+  }
+}
+
+function resetPreregFormUI() {
+  const formContent = DOM.get('formContent');
+  const formSuccess = DOM.get('formSuccess');
+  if (formContent && formSuccess) {
+    formContent.classList.remove('hidden');
+    formSuccess.classList.remove('active');
   }
 }
 
@@ -388,7 +444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (action === 'join-wa') {
         ModalService.open('visitorModal');
       } else if (action === 'preregister') {
-        ModalService.open('preregisterModal');
+        ModalService.open('modalForm');
       }
     });
   });
@@ -412,20 +468,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         'preregForm',
         (data) => FormValidator.validatePreinscription(data),
         async (formData) => {
+          const telephoneNormalized = FormValidator.normalizePhone(formData.telephone);
+          if (await isDuplicatePreregistration(telephoneNormalized)) {
+            notify.warning('Ce numéro est déjà utilisé pour une préinscription. Veuillez utiliser un autre numéro.');
+            return false;
+          }
+
           try {
             const doc = await addDoc(collection(db, 'preinscriptions'), {
               ...formData,
+              telephoneNormalized,
               createdAt: serverTimestamp(),
               source: 'online'
             });
             Logger.info('Pre-registration saved', { id: doc.id });
-            notify.success('Preinscription confirmee!');
+            notify.success('Préinscription confirmée !');
             preregForm.reset();
-            ModalService.close('preregisterModal');
+            resetPreregFormUI();
+            showPreregSuccess();
             return true;
           } catch (error) {
             Logger.error('Pre-registration error', error);
-            notify.error('Erreur lors de la preinscription.');
+            notify.error('Erreur lors de la préinscription.');
             return false;
           }
         }
@@ -478,11 +542,18 @@ window.submitForm = async () => {
 };
 
 window.openWA = function () {
+  forceWAFormMode = true;
+  clearVisitorSavedState();
+  const visitorForm = document.getElementById('visitorForm');
+  if (visitorForm) {
+    visitorForm.reset();
+  }
   updateWAModalUI();
   ModalService.open('modalWA');
 };
 
 window.closeWA = function () {
+  forceWAFormMode = false;
   ModalService.close('modalWA');
 };
 
@@ -492,6 +563,7 @@ window.openForm = function () {
 };
 
 window.closeForm = function () {
+  resetPreregFormUI();
   ModalService.close('modalForm');
 };
 
@@ -501,12 +573,27 @@ window.skipPreinscription = function () {
   notify.info('Pré-inscription ignorée.');
 };
 
-window.onWAClick = function () {
+window.onWAClick = function (event) {
+  if (!isVisitorSaved()) {
+    notify.error('Veuillez d’abord enregistrer votre visite avant de rejoindre le groupe WhatsApp.');
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
+    return false;
+  }
+
   markWAJoined();
   return true;
 };
 
-// Check saved state on page load
+function handleReturnFromWhatsApp() {
+  if (!shouldAutoOpenWAModal()) return;
+  forceWAFormMode = false;
+  updateWAModalUI();
+  openWAModalOnReturn();
+}
+
+// Check saved state on page load and when user returns to the page
 window.addEventListener('load', () => {
   if (isVisitorSaved()) {
     setWAJoinEnabled(true);
@@ -514,5 +601,17 @@ window.addEventListener('load', () => {
   updateWAModalUI();
   if (shouldAutoOpenWAModal()) {
     openWAModalOnReturn();
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    handleReturnFromWhatsApp();
+  }
+});
+
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    handleReturnFromWhatsApp();
   }
 });

@@ -193,7 +193,7 @@
            href="https://chat.whatsapp.com/BbNsuZ2uAcX0CyqQEn2Uhf?mode=gi_t"
            target="_blank"
            rel="noopener noreferrer"
-           onclick="onWAClick()"
+           onclick="return onWAClick(event)"
            aria-label="Ouvrir le lien WhatsApp dans une nouvelle fenêtre"
            aria-disabled="true">
           💬 &nbsp;Rejoindre le groupe WhatsApp
@@ -241,7 +241,7 @@
 
       <!-- Formulaire -->
       <div id="formContent">
-        <form class="form-glass" onsubmit="event.preventDefault(); submitForm();">
+        <form id="preregForm" class="form-glass" onsubmit="event.preventDefault(); submitForm();">
           
           <div class="form-row">
             <div class="form-group">
