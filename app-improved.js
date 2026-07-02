@@ -10,11 +10,7 @@ import {
   getDocs,
   serverTimestamp,
   query,
-  where,
-  orderBy,
-  onSnapshot,
-  doc,
-  updateDoc
+  where
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 /* ══════════════════════════════════════════════════════════════
@@ -69,6 +65,19 @@ const Logger = {
   warn(msg, data) {
     console.warn(`[WARN] ${msg}`, data || '');
   }
+};
+
+const STORAGE_KEYS = {
+  waJoined: 'uiya-wa-joined',
+  waVisitorSaved: 'uiya-wa-visitor-saved',
+  skipPreinscription: 'uiya-wa-skip-preinscription'
+};
+
+const WA_JOIN_URL = 'https://chat.whatsapp.com/BbNsuZ2uAcX0CyqQEn2Uhf?mode=gi_t';
+
+const FORM_IDS = {
+  visitor: 'visitorForm',
+  prereg: 'preregForm'
 };
 
 let userJoinedWA = false;
@@ -271,7 +280,7 @@ class FormValidator {
   
   static validatePhone(phone) {
     if (!phone) return false;
-    const regex = /^(\+225[0-9]{8}|[0-9]{8})$/;
+    const regex = /^(\+225[0-9]{10}|[0-9]{10})$/;
     return regex.test(phone.replace(/[\s\-\.]/g, ''));
   }
 
@@ -416,7 +425,7 @@ class ModalService {
   }
   
   static closeAll() {
-    document.querySelectorAll('.modal.active').forEach(modal => {
+    document.querySelectorAll('.modal-overlay.active, .modal.active').forEach(modal => {
       modal.classList.remove('active');
     });
     document.body.style.overflow = '';
@@ -440,18 +449,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'Escape') {
       ModalService.closeAll();
     }
-  });
-  
-  // Card click handlers
-  document.querySelectorAll('.action-card').forEach(card => {
-    card.addEventListener('click', function() {
-      const action = this.dataset.action;
-      if (action === 'join-wa') {
-        ModalService.open('visitorModal');
-      } else if (action === 'preregister') {
-        ModalService.open('modalForm');
-      }
-    });
   });
   
   // Visitor Form Submit
@@ -505,13 +502,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   // Real-time form validation
-  document.querySelectorAll('input, select, textarea').forEach(field => {
+  document.querySelectorAll('#preregForm input, #preregForm select').forEach(field => {
     field.addEventListener('blur', debounce(() => {
       const form = field.closest('form');
       if (!form) return;
       
       const formId = form.id;
-      if (formId === 'preregForm') {
+      if (formId === FORM_IDS.prereg) {
         const formData = FormService.getFormData(formId);
         const errors = FormValidator.validatePreinscription(formData);
         if (errors[field.name]) {
@@ -523,16 +520,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     }, 500));
+
+    field.addEventListener('input', () => {
+      field.classList.remove('error');
+      field.removeAttribute('aria-invalid');
+      const errorSpan = field.parentNode.querySelector('.form-error, .error-msg');
+      if (errorSpan) {
+        errorSpan.textContent = '';
+      }
+    });
   });
   
   // Modal close on overlay click
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
-        const modal = overlay.closest('.modal');
-        if (modal) {
-          ModalService.close(modal.id);
-        }
+        ModalService.close(overlay.id);
       }
     });
   });

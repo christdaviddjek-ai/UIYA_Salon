@@ -138,6 +138,7 @@
       <div class="modal-header">
         <h3 id="titleWA">Rejoindre le groupe WhatsApp</h3>
         <button class="modal-close" 
+                data-close="true"
                 onclick="closeWA()" 
                 aria-label="Fermer le dialog"
                 title="Fermer (Échap)">✕</button>
@@ -234,6 +235,7 @@
       <div class="modal-header">
         <h3 id="titleForm">Pré-inscription UIYA 2026</h3>
         <button class="modal-close" 
+                data-close="true"
                 onclick="closeForm()" 
                 aria-label="Fermer le formulaire"
                 title="Fermer (Échap)">✕</button>
@@ -291,11 +293,12 @@
               id="telephone" 
               name="telephone"
               class="form-input"
-              placeholder="+225 12345678" 
+              placeholder="+225 1234567890" 
               autocomplete="tel"
               required
               aria-label="Votre numéro WhatsApp"
               aria-required="true" />
+            <span class="form-hint">Format : +2251234567890 ou 0123456789</span>
             <span class="form-error" id="telephone-error" role="alert"></span>
           </div>
 
