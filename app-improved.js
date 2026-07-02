@@ -480,6 +480,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const doc = await addDoc(collection(db, 'preinscriptions'), {
               ...formData,
               telephoneNormalized,
+              statut: 'en_attente',
               createdAt: serverTimestamp(),
               source: 'online'
             });

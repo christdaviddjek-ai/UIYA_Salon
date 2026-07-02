@@ -1476,8 +1476,8 @@
   // ══════════════════════════════════════
   function updateStats() {
     var visitors   = allData.filter(d => d.source === 'stand').length;
-    var preinscrit = allData.filter(d => d.source !== 'stand' && (d.statut === "en_attente" || d.statut === "valide")).length;
-    var valide     = allData.filter(d => d.source !== 'stand' && d.statut === "valide").length;
+    var preinscrit = allData.filter(d => d.source !== 'stand' && (d.statut === "en_attente" || d.statut === "valide" || !d.statut)).length;
+    var valide     = allData.filter(d => d.source !== 'stand' && (d.statut === "valide")).length;
 
     animCount("stat-total",      visitors);
     animCount("stat-preinscrit", preinscrit);
@@ -1741,7 +1741,7 @@
 
   window.exportPreinscriptions = function () {
     var headers = ["#","Nom","Prénom","Téléphone","Filière","Ville","Établissement","Groupe WA","Statut","Date"];
-    var preinscriptions = allData.filter(d => !d.source);
+    var preinscriptions = allData.filter(d => d.source !== 'stand');
     var rows = preinscriptions.map((d, i) => [
       i+1, d.nom, d.prenom, d.telephone, d.filiere, d.ville,
       d.etablissement, isTrueValue(d.groupeWA) ? "Oui" : "Non",
