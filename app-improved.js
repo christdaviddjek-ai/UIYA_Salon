@@ -1,4 +1,4 @@
-// ══════════════════════════════════════════════════════════════
+﻿// ══════════════════════════════════════════════════════════════
 //  app-improved.js  –  Code Optimisé & Maintainable
 //  Services · Validation · Error Handling · Debounce
 // ══════════════════════════════════════════════════════════════
@@ -78,6 +78,7 @@ let savedVisitorId = null;
 function markWAJoined() {
   userJoinedWA = true;
   localStorage.setItem('uiya-wa-joined', '1');
+  updateWAModalUI();
 }
 
 function markVisitorSaved() {
@@ -99,6 +100,7 @@ function isVisitorSaved() {
 function getWAStatus() {
   return userJoinedWA || localStorage.getItem('uiya-wa-joined') === '1';
 }
+
 function setWAJoinEnabled(enabled) {
   const joinButton = document.getElementById('waJoinButton');
   if (!joinButton) return;
@@ -111,33 +113,74 @@ function setWAJoinEnabled(enabled) {
   }
 }
 
-async function saveVisitorInfo() {
-  const nom = DOM.get('waNom')?.value.trim();
-  const prenom = DOM.get('waPrenom')?.value.trim();
-  const serie = DOM.get('waSerie')?.value.trim();
-  const filiere = DOM.get('waFiliere')?.value.trim();
+function updateWAModalUI() {
+  const waContent = DOM.get('waContent');
+  const waSuccess = DOM.get('waSuccess');
+  const joined = getWAStatus();
+  const visitorSaved = isVisitorSaved();
 
-  if (!nom || !prenom || !serie || !filiere) {
-    notify.error('Veuillez remplir tous les champs avant d’enregistrer.');
-    return;
+  if (waContent && waSuccess) {
+    if (joined) {
+      waContent.classList.add('hidden');
+      waSuccess.classList.add('active');
+      setWAJoinEnabled(false);
+    } else {
+      waContent.classList.remove('hidden');
+      waSuccess.classList.remove('active');
+      setWAJoinEnabled(visitorSaved);
+    }
+  }
+}
+
+function shouldAutoOpenWAModal() {
+  if (!getWAStatus()) return false;
+  return localStorage.getItem('uiya-wa-skip-preinscription') !== '1';
+}
+
+function isModalActive(modalId) {
+  const modal = DOM.get(modalId);
+  return modal ? modal.classList.contains('active') : false;
+}
+
+function openWAModalOnReturn() {
+  if (!shouldAutoOpenWAModal()) return;
+  if (isModalActive('modalWA')) return;
+  updateWAModalUI();
+  ModalService.open('modalWA');
+}
+
+// NEW: saveVisitorInfo avec villeVisite support
+async function saveVisitorInfo() {
+  const nom = DOM.get('waNom')?.value?.trim();
+  const prenom = DOM.get('waPrenom')?.value?.trim();
+  const villeVisite = DOM.get('waVilleVisite')?.value?.trim();
+  const serie = DOM.get('waSerie')?.value?.trim();
+  const filiere = DOM.get('waFiliere')?.value?.trim();
+
+  if (!nom || !prenom || !villeVisite || !serie || !filiere) {
+    notify.error('Tous les champs sont requis.');
+    return false;
   }
 
   try {
-    // Vérifier doublon visiteur (nom + prenom)
-    try {
-      const qV = query(collection(db, 'preinscriptions'), where('nom', '==', nom), where('prenom', '==', prenom), where('source', '==', 'stand'));
-      const sV = await getDocs(qV);
-      if (!sV.empty) {
-        notify.warning('Une visite avec ce nom et prénom a déjà été enregistrée.');
-        return;
-      }
-    } catch (eDup) {
-      Logger.warn('Erreur vérif doublon visiteur', eDup);
+    // Check for duplicate visitor in same city
+    const qV = query(
+      collection(db, 'preinscriptions'),
+      where('nom', '==', nom),
+      where('prenom', '==', prenom),
+      where('villeVisite', '==', villeVisite),
+      where('source', '==', 'stand')
+    );
+    const sV = await getDocs(qV);
+    if (!sV.empty) {
+      notify.warning('Une visite avec ce nom et prenom existe deja dans cette ville.');
+      return false;
     }
 
     const visitorData = {
       nom,
       prenom,
+      villeVisite,
       serie,
       filiere,
       groupeWA: false,
@@ -148,16 +191,25 @@ async function saveVisitorInfo() {
     };
 
     const docRef = await addDoc(collection(db, 'preinscriptions'), visitorData);
-    Logger.info('Visiteur stand enregistré', { id: docRef.id, visitorData });
-    notify.success('✅ Visite enregistrée, vous pouvez maintenant rejoindre le groupe WA.');
+    Logger.info('Visiteur stand enregistre', { id: docRef.id, villeVisite, visitorData });
+    notify.success('Visite enregistree! Rejoignez le groupe WA.');
     markVisitorSavedWithId(docRef.id);
     setWAJoinEnabled(true);
+    updateWAModalUI();
+
+    const form = document.getElementById('visitorForm');
+    if (form) form.reset();
+
+    return true;
   } catch (error) {
     Logger.error('Erreur en enregistrant la visite', error);
-    notify.error('Impossible d’enregistrer vos informations. Réessayez.');
+    notify.error('Impossible d\'enregistrer vos informations. Reessayez.');
+    return false;
   }
 }
+
 window.saveVisitorInfo = saveVisitorInfo;
+
 /* ══════════════════════════════════════════════════════════════
    NOTIFICATION SERVICE
 ══════════════════════════════════════════════════════════════ */
@@ -172,504 +224,295 @@ class NotificationService {
     if (!this.toastEl) return;
     
     clearTimeout(this.toastTimeout);
-    
     this.toastEl.textContent = message;
-    this.toastEl.className = `toast active ${type}`;
+    this.toastEl.className = `toast-notification ${type}`;
+    this.toastEl.style.display = "flex";
     
     this.toastTimeout = setTimeout(() => {
-      this.toastEl.className = "toast";
+      this.toastEl.style.display = "none";
     }, duration);
-    
-    Logger.info(`Toast: ${message}`, { type });
   }
   
-  success(message) {
-    this.show(message, "success");
-  }
-  
-  error(message) {
-    this.show(message, "error");
-  }
-  
-  warning(message) {
-    this.show(message, "warning");
-  }
+  success(message) { this.show(message, "success", 3000); }
+  error(message) { this.show(message, "error", 4000); }
+  warning(message) { this.show(message, "warning", 3500); }
+  info(message) { this.show(message, "info", 3000); }
 }
 
 const notify = new NotificationService();
 
 /* ══════════════════════════════════════════════════════════════
-   FORM VALIDATION SERVICE
+   FORM VALIDATOR SERVICE
 ══════════════════════════════════════════════════════════════ */
 
 class FormValidator {
-  constructor() {
-    this.errors = {};
+  static validatePreinscription(formData) {
+    const errors = {};
+    
+    if (!formData.nom?.trim()) errors.nom = 'Nom requis';
+    if (!formData.prenom?.trim()) errors.prenom = 'Prenom requis';
+    if (!formData.telephone?.trim()) errors.telephone = 'Telephone requis';
+    if (!this.validatePhone(formData.telephone)) errors.telephone = 'Format telephone invalide';
+    if (!formData.filiere?.trim()) errors.filiere = 'Filiere requise';
+    if (!formData.ville?.trim()) errors.ville = 'Ville requise';
+    if (!formData.etablissement?.trim()) errors.etablissement = 'Etablissement requis';
+    
+    return errors;
   }
   
-  /**
-   * Valide un formulaire de pré-inscription
-   */
-  validatePreinscription(data) {
-    this.errors = {};
-    
-    // Nom
-    if (!data.nom || !data.nom.trim()) {
-      this.errors.nom = "Nom requis";
-    } else if (data.nom.length < 2) {
-      this.errors.nom = "Nom doit contenir au moins 2 caractères";
-    }
-    
-    // Prénom
-    if (!data.prenom || !data.prenom.trim()) {
-      this.errors.prenom = "Prénom requis";
-    } else if (data.prenom.length < 2) {
-      this.errors.prenom = "Prénom doit contenir au moins 2 caractères";
-    }
-    
-    // Téléphone (format Côte d'Ivoire)
-    if (!data.telephone || !data.telephone.trim()) {
-      this.errors.telephone = "Téléphone requis (ex: +225700000000)";
-    } else if (!this.validatePhone(data.telephone)) {
-      this.errors.telephone = "Format invalide. Utilisez +225 ou 0 suivi du numéro (ex: +225700000000)";
-    }
-    
-    // Filière
-    if (!data.filiere) {
-      this.errors.filiere = "Filière requise";
-    }
-    
-    // Ville
-    if (!data.ville) {
-      this.errors.ville = "Ville requise";
-    }
-    
-    // Établissement
-    if (!data.etablissement || !data.etablissement.trim()) {
-      this.errors.etablissement = "Établissement requis";
-    } else if (data.etablissement.length < 3) {
-      this.errors.etablissement = "Établissement invalide";
-    }
-    
-    return Object.keys(this.errors).length === 0;
+  static validatePhone(phone) {
+    if (!phone) return false;
+    const regex = /^(\+225[01-9][0-9]{8}|0[1-9][0-9]{8,9})$/;
+    return regex.test(phone.replace(/[\s\-\.]/g, ''));
   }
   
-  /**
-   * Valide un numéro de téléphone (Côte d'Ivoire: +225 ou 07)
-   */
-  validatePhone(phone) {
-    const cleanPhone = phone.replace(/\s+/g, '');
-    const phoneRegex = /^(\+225|0)([0-9]{9,10})$/;
-    return phoneRegex.test(cleanPhone);
-  }
-  
-  /**
-   * Affiche les erreurs sur le formulaire
-   */
-  displayErrors(formId) {
-    // D'abord, enlever toutes les erreurs existantes
-    DOM.qsa(`#${formId} .form-input`).forEach(input => {
-      input.classList.remove("error");
+  static displayErrors(formId, errors) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    
+    const inputs = form.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+      input.classList.remove('error');
+      input.removeAttribute('aria-invalid');
+      
+      const errorDiv = input.nextElementSibling;
+      if (errorDiv?.classList.contains('error-msg')) {
+        errorDiv.remove();
+      }
     });
     
-    // Afficher les nouvelles erreurs
-    Object.entries(this.errors).forEach(([fieldName, errorMsg]) => {
-      const input = DOM.get(fieldName);
+    Object.keys(errors).forEach(fieldName => {
+      const input = form.querySelector(`[name="${fieldName}"]`);
       if (input) {
-        input.classList.add("error");
-        input.setAttribute("aria-invalid", "true");
-        input.setAttribute("aria-describedby", `${fieldName}-error`);
-        const errEl = document.getElementById(`${fieldName}-error`);
-        if (errEl) errEl.textContent = errorMsg;
+        input.classList.add('error');
+        input.setAttribute('aria-invalid', 'true');
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-msg';
+        errorDiv.textContent = errors[fieldName];
+        input.parentNode.appendChild(errorDiv);
       }
     });
   }
-  
-  /**
-   * Nettoie les erreurs
-   */
-  clearErrors(formId) {
-    this.errors = {};
-    DOM.qsa(`#${formId} .form-input`).forEach(input => {
-      input.classList.remove("error");
-      input.removeAttribute("aria-invalid");
-      input.removeAttribute("aria-describedby");
-      const errEl = document.getElementById(`${input.id}-error`);
-      if (errEl) errEl.textContent = "";
-    });
-  }
 }
-
-const validator = new FormValidator();
 
 /* ══════════════════════════════════════════════════════════════
    FORM SERVICE
 ══════════════════════════════════════════════════════════════ */
 
 class FormService {
-  constructor() {
-    this.COLLECTION = "preinscriptions";
-    this.isSubmitting = false;
-    this.lastSubmissionId = null;
-  }
-  
-  /**
-   * Récupère les données du formulaire
-   */
-  getFormData() {
-    return {
-      nom: DOM.get("nom")?.value || "",
-      prenom: DOM.get("prenom")?.value || "",
-      telephone: DOM.get("telephone")?.value || "",
-      filiere: DOM.get("filiere")?.value || "",
-      ville: DOM.get("ville")?.value || "",
-      etablissement: DOM.get("etablissement")?.value || ""
-    };
-  }
-  
-  /**
-   * Nettoie les données (trim + sanitization basique)
-   */
-  sanitizeData(data) {
-    return {
-      nom: data.nom.trim(),
-      prenom: data.prenom.trim(),
-      telephone: data.telephone.trim(),
-      filiere: data.filiere,
-      ville: data.ville,
-      etablissement: data.etablissement.trim()
-    };
-  }
-  
-  /**
-   * Réinitialise le formulaire
-   */
-  clearForm() {
-    ["nom", "prenom", "telephone", "etablissement"].forEach(id => {
-      const el = DOM.get(id);
-      if (el) el.value = "";
-    });
+  static getFormData(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return null;
     
-    const filiereEl = DOM.get("filiere");
-    if (filiereEl) filiereEl.value = "";
-    const villeEl = DOM.get("ville");
-    if (villeEl) villeEl.value = "";
-    
-    validator.clearErrors("formContent");
+    const formData = new FormData(form);
+    return Object.fromEntries(formData);
   }
   
-  /**
-   * Soumet le formulaire vers Firebase
-   */
-  async submit() {
-    if (this.isSubmitting) return;
+  static async submit(formId, validationFn, submitFn) {
+    const formData = this.getFormData(formId);
+    if (!formData) return false;
+    
+    const errors = validationFn(formData);
+    if (Object.keys(errors).length > 0) {
+      FormValidator.displayErrors(formId, errors);
+      return false;
+    }
     
     try {
-      // Récupérer les données
-      let data = this.getFormData();
-      
-      // Valider
-      if (!validator.validatePreinscription(data)) {
-        validator.displayErrors("formContent");
-        notify.error("⚠️ Veuillez corriger les erreurs du formulaire");
-        return false;
-      }
-      
-      // Nettoyer
-      data = this.sanitizeData(data);
-
-      // Vérifier les doublons (par téléphone)
-      try {
-        const qTel = query(collection(db, this.COLLECTION), where("telephone", "==", data.telephone));
-        const snapTel = await getDocs(qTel);
-        if (!snapTel.empty) {
-          validator.errors.telephone = "Un dossier existe déjà pour ce numéro de téléphone. Si c'est votre dossier, contactez l'équipe pour mise à jour.";
-          validator.displayErrors("formContent");
-          notify.error('Un dossier existe déjà pour ce numéro de téléphone.');
-          return false;
-        }
-
-        // Vérifier doublons par nom+prénom
-        const qName = query(collection(db, this.COLLECTION), where("nom", "==", data.nom), where("prenom", "==", data.prenom));
-        const snapName = await getDocs(qName);
-        if (!snapName.empty) {
-          validator.errors.nom = "Un dossier portant ce nom et prénom existe déjà.";
-          validator.errors.prenom = "Un dossier portant ce nom et prénom existe déjà.";
-          validator.displayErrors("formContent");
-          notify.error('Un dossier avec ce nom et prénom existe déjà.');
-          return false;
-        }
-      } catch (errDup) {
-        Logger.warn('Erreur vérification doublons', errDup);
-        // ne bloque pas l'envoi si la vérification échoue
-      }
-      
-      // Désactiver le bouton pendant l'envoi
-      const submitBtn = DOM.qs("#formContent .submit-btn");
-      if (submitBtn) {
-        this.isSubmitting = true;
-        submitBtn.disabled = true;
-        submitBtn.setAttribute("aria-busy", "true");
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = "Envoi en cours…";
-        
-        try {
-          // Ajouter à Firestore
-          const docRef = await addDoc(collection(db, this.COLLECTION), {
-            ...data,
-            groupeWA: getWAStatus(),
-            statut: "valide",
-            createdAt: serverTimestamp(),
-            validatedAt: serverTimestamp()
-          });
-          this.lastSubmissionId = docRef.id;
-          
-          Logger.info("Form submitted successfully", { id: docRef.id, ...data });
-          
-          // Afficher le succès
-          const formContent = DOM.get("formContent");
-          const formSuccess = DOM.get("formSuccess");
-          
-          if (formContent) formContent.style.display = "none";
-          if (formSuccess) formSuccess.classList.add("active");
-          
-          notify.success("✅ Pré-inscription enregistrée!");
-          return true;
-          
-        } catch (error) {
-          Logger.error("Form submission error", error);
-          notify.error(`❌ Erreur: ${error.message}`);
-          return false;
-          
-        } finally {
-          this.isSubmitting = false;
-          submitBtn.disabled = false;
-          submitBtn.removeAttribute("aria-busy");
-          submitBtn.textContent = originalText;
-        }
-      }
-      
+      return await submitFn(formData);
     } catch (error) {
-      Logger.error("Unexpected error", error);
-      notify.error("Une erreur inattendue s'est produite");
+      Logger.error('Form submission error', error);
       return false;
     }
   }
 }
-
-const formService = new FormService();
 
 /* ══════════════════════════════════════════════════════════════
    MODAL SERVICE
 ══════════════════════════════════════════════════════════════ */
 
 class ModalService {
-  constructor() {
-    this.activeModal = null;
-  }
-  
-  /**
-   * Ouvre un modal
-   */
-  open(modalId) {
-    const modal = DOM.get(modalId);
-    if (!modal) {
-      Logger.warn(`Modal ${modalId} not found`);
-      return;
-    }
-    
-    this.activeModal = modalId;
-    modal.classList.add("active");
-    document.body.style.overflow = "hidden";
-    document.body.setAttribute("aria-hidden", "true");
-    
-    // Focus trap: Focus le premier élément focusable
-    setTimeout(() => {
-      const focusable = modal.querySelector("button, input, select");
-      if (focusable) focusable.focus();
-    }, 200);
-  }
-  
-  /**
-   * Ferme un modal
-   */
-  close(modalId) {
+  static open(modalId) {
     const modal = DOM.get(modalId);
     if (!modal) return;
     
-    this.activeModal = null;
-    modal.classList.remove("active");
-    document.body.style.overflow = "";
-    document.body.removeAttribute("aria-hidden");
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    const closeBtn = modal.querySelector('[data-close]');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.close(modalId));
+    }
   }
   
-  /**
-   * Ferme tous les modals
-   */
-  closeAll() {
-    DOM.qsa(".modal-overlay.active").forEach(overlay => {
-      overlay.classList.remove("active");
+  static close(modalId) {
+    const modal = DOM.get(modalId);
+    if (!modal) return;
+    
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  
+  static closeAll() {
+    document.querySelectorAll('.modal.active').forEach(modal => {
+      modal.classList.remove('active');
     });
-    document.body.style.overflow = "";
-    document.body.removeAttribute("aria-hidden");
+    document.body.style.overflow = '';
   }
 }
 
-const modal = new ModalService();
-
 /* ══════════════════════════════════════════════════════════════
-   WHATSAPP MODAL HANDLERS
+   EVENT LISTENERS & HANDLERS
 ══════════════════════════════════════════════════════════════ */
 
-window.openWA = function() {
-  modal.open("modalWA");
-};
-
-window.closeWA = function() {
-  modal.close("modalWA");
+document.addEventListener('DOMContentLoaded', async () => {
+  Logger.info('DOM loaded, initializing app');
   
-  const waContent = DOM.get("waContent");
-  const waSuccess = DOM.get("waSuccess");
-  
-  if (waContent) waContent.style.display = "block";
-  if (waSuccess) waSuccess.classList.remove("active");
-};
-
-window.onWAClick = async function() {
-  if (document.getElementById('waJoinButton')?.classList.contains('disabled')) {
-    notify.warning('Veuillez d’abord enregistrer vos informations de visiteur avant de rejoindre le groupe.');
-    return;
+  // Initialize Lucide icons
+  if (window.lucide) {
+    lucide.createIcons();
   }
-
-  markWAJoined();
-  if (formService.lastSubmissionId) {
-    try {
-      await updateDoc(doc(db, 'preinscriptions', formService.lastSubmissionId), {
-        groupeWA: true,
-        statut: 'valide',
-        validatedAt: serverTimestamp()
-      });
-      Logger.info('Dernier dossier mis à jour pour WA', { id: formService.lastSubmissionId });
-    } catch (error) {
-      Logger.error('Impossible de mettre à jour le dossier WA', error);
+  
+  // Escape key closes modals
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      ModalService.closeAll();
     }
-  }
-
-  setTimeout(() => {
-    const waContent = DOM.get('waContent');
-    const waSuccess = DOM.get('waSuccess');
-    
-    if (waContent) waContent.style.display = 'none';
-    if (waSuccess) waSuccess.classList.add('active');
-  }, 1500);
-};
-window.skipPreinscription = function() {
-  if (!isVisitorSaved()) {
-    // allow skipping but record a visitor placeholder so admin counts them
-    (async () => {
-      try {
-        const placeholder = {
-          nom: 'Visiteur', prenom: 'Anonyme', serie: '', filiere: '',
-          groupeWA: false, statut: 'en_attente', source: 'stand', createdAt: serverTimestamp()
-        };
-        const docRef = await addDoc(collection(db, 'preinscriptions'), placeholder);
-        Logger.info('Visiteur (skip) enregistré', { id: docRef.id });
-        markVisitorSavedWithId(docRef.id);
-      } catch (e) {
-        Logger.error('Erreur en enregistrant visiteur skip', e);
+  });
+  
+  // Card click handlers
+  document.querySelectorAll('.action-card').forEach(card => {
+    card.addEventListener('click', function() {
+      const action = this.dataset.action;
+      if (action === 'join-wa') {
+        ModalService.open('visitorModal');
+      } else if (action === 'preregister') {
+        ModalService.open('preregisterModal');
       }
-    })();
-  }
-  notify.success("Merci pour votre visite. À bientôt sur l'UIYA! 👋");
-};
-
-/* ══════════════════════════════════════════════════════════════
-   FORM MODAL HANDLERS
-══════════════════════════════════════════════════════════════ */
-
-window.openForm = function() {
-  modal.open("modalForm");
-  validator.clearErrors("formContent");
-};
-
-window.closeForm = function() {
-  modal.close("modalForm");
-  
-  const formContent = DOM.get("formContent");
-  const formSuccess = DOM.get("formSuccess");
-  
-  if (formContent) formContent.style.display = "block";
-  if (formSuccess) formSuccess.classList.remove("active");
-  
-  formService.clearForm();
-};
-
-window.skipPreinscription = function() {
-  notify.success("Merci pour votre visite. À bientôt sur l'UIYA! 👋");
-};
-
-window.submitForm = async function() {
-  await formService.submit();
-};
-
-/* ══════════════════════════════════════════════════════════════
-   MODAL OVERLAY CLICK HANDLING
-══════════════════════════════════════════════════════════════ */
-
-DOM.qsa(".modal-overlay").forEach(overlay => {
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) {
-      const modalId = overlay.id;
-      if (modalId === "modalWA") window.closeWA();
-      if (modalId === "modalForm") window.closeForm();
-    }
+    });
   });
-});
-
-/* ══════════════════════════════════════════════════════════════
-   KEYBOARD ACCESSIBILITY
-══════════════════════════════════════════════════════════════ */
-
-// Escape key para cerrar modals
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    modal.closeAll();
-  }
-});
-
-// Accessibility sur les cartes
-DOM.qsa(".card").forEach(card => {
-  card.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
+  
+  // Visitor Form Submit
+  const visitorForm = document.getElementById('visitorForm');
+  if (visitorForm) {
+    visitorForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      card.click();
-    }
-  });
-});
-
-// Validation en temps réel (optional)
-DOM.qsa(".form-group input, .form-group select").forEach(input => {
-  input.addEventListener("blur", () => {
-    const data = formService.getFormData();
-    if (!validator.validatePreinscription(data)) {
-      validator.displayErrors("formContent");
-    } else {
-      validator.clearErrors("formContent");
-      input.classList.remove("error");
-    }
-  });
-});
-
-/* ══════════════════════════════════════════════════════════════
-   INITIALIZATION
-══════════════════════════════════════════════════════════════ */
-
-document.addEventListener("DOMContentLoaded", () => {
-  Logger.info("App initialized");
+      await saveVisitorInfo();
+    });
+  }
   
-  // Vous pouvez ajouter d'autres initialisations ici
-  // Par exemple: chargement de données, configuration, etc.
+  // Pre-registration Form Submit
+  const preregForm = document.getElementById('preregForm');
+  if (preregForm) {
+    preregForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const result = await FormService.submit(
+        'preregForm',
+        (data) => FormValidator.validatePreinscription(data),
+        async (formData) => {
+          try {
+            const doc = await addDoc(collection(db, 'preinscriptions'), {
+              ...formData,
+              createdAt: serverTimestamp(),
+              source: 'online'
+            });
+            Logger.info('Pre-registration saved', { id: doc.id });
+            notify.success('Preinscription confirmee!');
+            preregForm.reset();
+            ModalService.close('preregisterModal');
+            return true;
+          } catch (error) {
+            Logger.error('Pre-registration error', error);
+            notify.error('Erreur lors de la preinscription.');
+            return false;
+          }
+        }
+      );
+      
+      return result;
+    });
+  }
+  
+  // Real-time form validation
+  document.querySelectorAll('input, select, textarea').forEach(field => {
+    field.addEventListener('blur', debounce(() => {
+      const form = field.closest('form');
+      if (!form) return;
+      
+      const formId = form.id;
+      if (formId === 'preregForm') {
+        const formData = FormService.getFormData(formId);
+        const errors = FormValidator.validatePreinscription(formData);
+        if (errors[field.name]) {
+          field.classList.add('error');
+          field.setAttribute('aria-invalid', 'true');
+        } else {
+          field.classList.remove('error');
+          field.removeAttribute('aria-invalid');
+        }
+      }
+    }, 500));
+  });
+  
+  // Modal close on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        const modal = overlay.closest('.modal');
+        if (modal) {
+          ModalService.close(modal.id);
+        }
+      }
+    });
+  });
 });
 
-// Export pour tests ou utilisation externe
-export { FormValidator, FormService, NotificationService, ModalService, debounce };
+// Expose for HTML onclick handlers
+window.submitForm = async () => {
+  const preregForm = document.getElementById('preregForm');
+  if (preregForm) {
+    preregForm.dispatchEvent(new Event('submit'));
+  }
+};
+
+window.openWA = function () {
+  updateWAModalUI();
+  ModalService.open('modalWA');
+};
+
+window.closeWA = function () {
+  ModalService.close('modalWA');
+};
+
+window.openForm = function () {
+  ModalService.close('modalWA');
+  ModalService.open('modalForm');
+};
+
+window.closeForm = function () {
+  ModalService.close('modalForm');
+};
+
+window.skipPreinscription = function () {
+  localStorage.setItem('uiya-wa-skip-preinscription', '1');
+  ModalService.closeAll();
+  notify.info('Pré-inscription ignorée.');
+};
+
+window.onWAClick = function () {
+  markWAJoined();
+  return true;
+};
+
+// Check saved state on page load
+window.addEventListener('load', () => {
+  if (isVisitorSaved()) {
+    setWAJoinEnabled(true);
+  }
+  updateWAModalUI();
+  if (shouldAutoOpenWAModal()) {
+    openWAModalOnReturn();
+  }
+});

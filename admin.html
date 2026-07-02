@@ -1029,6 +1029,28 @@
         </div>
       </div>
 
+      <!-- Stats par Ville -->
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-icon"><i data-lucide="map-pin"></i></div>
+          <div class="stat-value" id="stat-abidjan">–</div>
+          <div class="stat-label">Abidjan</div>
+          <div class="stat-sub"><span class="dot"></span> Visiteurs du stand</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon"><i data-lucide="map-pin"></i></div>
+          <div class="stat-value" id="stat-daloa">–</div>
+          <div class="stat-label">Daloa</div>
+          <div class="stat-sub"><span class="dot"></span> Visiteurs du stand</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon"><i data-lucide="map-pin"></i></div>
+          <div class="stat-value" id="stat-abengourou">–</div>
+          <div class="stat-label">Abengourou</div>
+          <div class="stat-sub"><span class="dot"></span> Visiteurs du stand</div>
+        </div>
+      </div>
+
       <!-- Graphiques -->
       <div class="charts-row">
         <!-- Bar chart par ville -->
@@ -1082,8 +1104,9 @@
                placeholder="🔍 Rechercher un nom..." oninput="filterTable()" />
         <select class="filter-select" id="filterVillePreinscrit" onchange="filterTable()">
           <option value="">Toutes les villes</option>
-          <option>Abidjan</option><option>Bouaké</option>
-          <option>Daloa</option><option>Yamoussoukro</option><option>San-Pédro</option>
+          <option value="Abidjan">Abidjan</option>
+          <option value="Daloa">Daloa</option>
+          <option value="Abengourou">Abengourou</option>
         </select>
         <select class="filter-select" id="filterStatut" onchange="filterTable()">
           <option value="">Tous les statuts</option>
@@ -1136,6 +1159,16 @@
           <h2>Visiteurs du stand</h2>
           <p id="countVisiteurs">Tous les visiteurs enregistrés</p>
         </div>
+        <div class="filters">
+          <input class="search-input" type="text" id="searchVisiteurs"
+                 placeholder="🔍 Rechercher un nom..." oninput="filterVisitors()" />
+          <select class="filter-select" id="filterVilleVisiteurs" onchange="filterVisitors()">
+            <option value="">Toutes les villes</option>
+            <option value="Abidjan">Abidjan</option>
+            <option value="Daloa">Daloa</option>
+            <option value="Abengourou">Abengourou</option>
+          </select>
+        </div>
         <div class="export-btns">
           <button class="btn-export green" onclick="exportVisiteurs()">
             📥 Exporter liste visiteurs
@@ -1150,14 +1183,14 @@
                 <th>#</th>
                 <th>Nom</th>
                 <th>Prénom</th>
-                <th>Téléphone</th>
-                <th>Ville</th>
-                <th>Établissement</th>
+                <th>Série</th>
+                <th>Filière</th>
+                <th>Ville de visite</th>
                 <th>Date visite</th>
               </tr>
             </thead>
             <tbody id="visiteursTable">
-              <tr><td colspan="8"><div class="loader-wrap"><div class="loader"></div></div></td></tr>
+              <tr><td colspan="7"><div class="loader-wrap"><div class="loader"></div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1449,6 +1482,15 @@
     animCount("stat-total",      visitors);
     animCount("stat-preinscrit", preinscrit);
     animCount("stat-valide",     valide);
+
+    // Statistiques par ville (villeVisite pour les visiteurs du stand)
+    var abidjan = allData.filter(d => d.source === 'stand' && d.villeVisite === 'Abidjan').length;
+    var daloa = allData.filter(d => d.source === 'stand' && d.villeVisite === 'Daloa').length;
+    var abengourou = allData.filter(d => d.source === 'stand' && d.villeVisite === 'Abengourou').length;
+
+    animCount("stat-abidjan", abidjan);
+    animCount("stat-daloa", daloa);
+    animCount("stat-abengourou", abengourou);
   }
 
   function animCount(id, target) {
@@ -1488,8 +1530,11 @@
   //  BAR CHART (villes) → PIE CHART (Chart.js)
   // ══════════════════════════════════════
   function updateBarChart() {
+    // Compter uniquement les visiteurs du stand par villeVisite
     var villes = {};
-    allData.forEach(d => { if (d.ville) villes[d.ville] = (villes[d.ville] || 0) + 1; });
+    allData.filter(d => d.source === 'stand').forEach(d => { 
+      if (d.villeVisite) villes[d.villeVisite] = (villes[d.villeVisite] || 0) + 1; 
+    });
     var labels = Object.keys(villes);
     var data = labels.map(l => villes[l]);
     var container = document.getElementById('barChart');
@@ -1595,12 +1640,22 @@
   // ══════════════════════════════════════
   //  TABLE VISITEURS
   // ══════════════════════════════════════
+  function getFilteredVisitors() {
+    var search = document.getElementById("searchVisiteurs")?.value.toLowerCase() || "";
+    var ville  = document.getElementById("filterVilleVisiteurs")?.value || "";
+    return allData.filter(d => d.source === 'stand').filter(d => {
+      var name = ((d.nom || "") + " " + (d.prenom || "")).toLowerCase();
+      return (!search || name.includes(search))
+          && (!ville  || d.villeVisite === ville);
+    });
+  }
+
   function updateVisiteursTable() {
-    var visitors = allData.filter(d => d.source === 'stand');
+    var visitors = getFilteredVisitors();
     var tbody = document.getElementById("visiteursTable");
     document.getElementById("countVisiteurs").textContent = visitors.length + " visiteur(s) enregistré(s)";
     if (!visitors.length) {
-      tbody.innerHTML = '<tr><td colspan="8"><div class="table-empty"><span>📭</span>Aucun visiteur</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7"><div class="table-empty"><span>📭</span>Aucun visiteur</div></td></tr>';
       return;
     }
     tbody.innerHTML = visitors.map((d, i) => `
@@ -1608,12 +1663,16 @@
         <td style="color:var(--muted);font-size:12px;">${i+1}</td>
         <td><strong>${d.nom}</strong></td>
         <td>${d.prenom}</td>
-        <td>${d.telephone}</td>
-        <td>${d.ville || "–"}</td>
-        <td style="font-size:12px;">${d.etablissement || "–"}</td>
+        <td>${d.serie || "–"}</td>
+        <td>${d.filiere || "–"}</td>
+        <td>${d.villeVisite || "–"}</td>
         <td style="font-size:12px;">${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString('fr-FR') : "–"}</td>
       </tr>`).join("");
   }
+
+  window.filterVisitors = function () {
+    updateVisiteursTable();
+  };
 
   // ══════════════════════════════════════
   //  FILTRE TABLE PRÉ-INSCRIPTIONS
@@ -1693,10 +1752,10 @@
   };
 
   window.exportVisiteurs = function () {
-    var headers = ["#","Nom","Prénom","Téléphone","Ville","Établissement","Groupe WA","Date visite"];
-    var rows = allData.map((d, i) => [
-      i+1, d.nom, d.prenom, d.telephone, d.ville,
-      d.etablissement, isTrueValue(d.groupeWA) ? "Oui" : "Non",
+    var visitors = allData.filter(d => d.source === 'stand');
+    var headers = ["#","Nom","Prénom","Série","Filière","Ville de visite","Date visite"];
+    var rows = visitors.map((d, i) => [
+      i+1, d.nom, d.prenom, d.serie || "–", d.filiere || "–", d.villeVisite || "–",
       d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString("fr-FR") : "–"
     ]);
     downloadCSV(toCSV(headers, rows), "visiteurs_uiya_2026.csv");
