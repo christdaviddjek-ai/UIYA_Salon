@@ -6,14 +6,15 @@
 /* ── VARIABLES OPTIMISÉES ─────────────────────────────────────────── */
 :root {
   /* Couleurs Primaires */
-  --navy:               #0A1E6E;
-  --navy-dark:          #071550;
-  --navy-light:         #EBF0FF;
+  --navy:               #304A7E;
+  --navy-dark:          #223A65;
+  --navy-mid:           #40669D;
+  --navy-light:         #EEF3FA;
   
   /* Couleurs Secondaires */
-  --red:                #C0392B;
-  --red-dark:           #a93226;
-  --red-light:          #FEF0EF;
+  --red:                #D65B5B;
+  --red-dark:           #A94349;
+  --red-light:          #FCE8E8;
   
   /* Status Colors */
   --success:            #27ae60;
@@ -24,8 +25,8 @@
   --error-light:        #fadbd8;
   
   /* Green WhatsApp */
-  --green-wa:           #25D366;
-  --green-wa-dk:        #1eb855;
+  --green-wa:           #1FA84D;
+  --green-wa-dk:        #197C3F;
   
   /* Textes */
   --text:               #1a1a2e;
@@ -83,7 +84,7 @@ html {
    HEADER
 ══════════════════════════════════════════════════════════════ */
 .header {
-  background: linear-gradient(135deg, var(--navy) 0%, #1a3aad 60%, var(--red) 100%);
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--red) 100%);
   position: relative;
   overflow: hidden;
   padding: 30px 28px 26px;
@@ -169,7 +170,7 @@ html {
    WAVE
 ══════════════════════════════════════════════════════════════ */
 .wave-wrap {
-  background: linear-gradient(135deg, var(--navy) 0%, #1a3aad 60%, var(--red) 100%);
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--red) 100%);
   line-height: 0;
 }
 

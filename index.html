@@ -11,8 +11,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Lucide Icons -->
   <script src="lucide.min.js"></script>
@@ -181,11 +180,11 @@
           </div>
           <div class="form-row">
             <label for="waSerie">Série</label>
-            <input id="waSerie" type="text" placeholder="Ex : S, L, STI" required />
+            <input id="waSerie" type="text" placeholder="Ex : D, C, A1,A2  " required />
           </div>
           <div class="form-row">
             <label for="waFiliere">Filière souhaitée</label>
-            <input id="waFiliere" type="text" placeholder="Ex : IGL, RT, CM" required />
+            <input id="waFiliere" type="text" placeholder="Ex : IGL, RIT, COM" required />
           </div>
           <button class="submit-btn" type="submit">Enregistrer ma visite</button>
         </form>
@@ -298,7 +297,7 @@
               required
               aria-label="Votre numéro WhatsApp"
               aria-required="true" />
-            <span class="form-hint">Format : +2251234567890 ou 0123456789</span>
+            <span class="form-hint">Format : +225 XXXXXXXXXX ou  XXXXXXXXXX </span>
             <span class="form-error" id="telephone-error" role="alert"></span>
           </div>
 
@@ -321,6 +320,7 @@
               <option value="DROIT">DROIT</option>
               <option value="ANGLAIS">Anglais</option>
               <option value="SEG">SEG</option>
+              <option value="RIT">RIT</option>
             </select>
             </div>
             <span class="form-error" id="filiere-error" role="alert"></span>
