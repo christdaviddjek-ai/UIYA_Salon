@@ -273,7 +273,11 @@ class FormValidator {
     if (!formData.prenom?.trim()) errors.prenom = 'Prenom requis';
     if (!formData.telephone?.trim()) errors.telephone = 'Telephone requis';
     if (!this.validatePhone(formData.telephone)) errors.telephone = 'Format telephone invalide';
-    if (!formData.filiere?.trim()) errors.filiere = 'Filiere requise';
+    if (!formData.filiere?.trim()) {
+      errors.filiere = 'Filiere requise';
+    } else if (formData.filiere === 'Autre' && !formData.filiereAutre?.trim()) {
+      errors.filiereAutre = 'Veuillez préciser votre filière';
+    }
     if (!formData.ville?.trim()) errors.ville = 'Ville requise';
     if (!formData.etablissement?.trim()) errors.etablissement = 'Etablissement requis';
     
@@ -385,6 +389,10 @@ class FormService {
     const formData = this.getFormData(formId);
     if (!formData) return false;
     
+    if (formData.filiere === 'Autre') {
+      formData.filiere = formData.filiereAutre?.trim() || '';
+    }
+    
     const errors = validationFn(formData);
     if (Object.keys(errors).length > 0) {
       FormValidator.displayErrors(formId, errors);
@@ -468,51 +476,73 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Pre-registration Form Submit
   const preregForm = document.getElementById(FORM_IDS.prereg);
   if (preregForm) {
+    const filiereSelect = DOM.get('filiere');
+    const filiereOtherGroup = DOM.get('filiere-autre-group');
+    const filiereOtherInput = DOM.get('filiereAutre');
+
+    const toggleFiliereAutre = () => {
+      if (!filiereSelect || !filiereOtherGroup) return;
+      if (filiereSelect.value === 'Autre') {
+        filiereOtherGroup.classList.remove('hidden');
+        filiereOtherInput?.setAttribute('required', 'required');
+      } else {
+        filiereOtherGroup.classList.add('hidden');
+        filiereOtherInput?.removeAttribute('required');
+        if (filiereOtherInput) filiereOtherInput.value = '';
+      }
+    };
+
+    toggleFiliereAutre();
+    filiereSelect?.addEventListener('change', toggleFiliereAutre);
+
     preregForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (isPreregSubmitting) return;
       isPreregSubmitting = true;
-      
-      const result = await FormService.submit(
-        'preregForm',
-        (data) => FormValidator.validatePreinscription(data),
-        async (formData) => {
-          const telephoneNormalized = FormValidator.normalizePhone(formData.telephone);
-          if (await isDuplicatePreregistration(telephoneNormalized)) {
-            notify.warning('Ce numéro est déjà utilisé pour une préinscription. Veuillez utiliser un autre numéro.');
-            return false;
-          }
 
-          try {
-            const doc = await addDoc(collection(db, 'preinscriptions'), {
-              ...formData,
-              telephoneNormalized,
-              statut: 'en_attente',
-              createdAt: serverTimestamp(),
-              source: 'online'
-            });
-            Logger.info('Pre-registration saved', { id: doc.id });
-            notify.success('Préinscription confirmée !');
-            preregForm.reset();
-            resetPreregFormUI();
-            showPreregSuccess();
-            return true;
-          } catch (error) {
-            Logger.error('Pre-registration error', error);
-            notify.error('Erreur lors de la préinscription.');
-            return false;
-          } finally {
-            isPreregSubmitting = false;
+      try {
+        const result = await FormService.submit(
+          'preregForm',
+          (data) => FormValidator.validatePreinscription(data),
+          async (formData) => {
+            const telephoneNormalized = FormValidator.normalizePhone(formData.telephone);
+            if (await isDuplicatePreregistration(telephoneNormalized)) {
+              notify.warning('Ce numéro est déjà utilisé pour une préinscription. Veuillez utiliser un autre numéro.');
+              return false;
+            }
+
+            try {
+              const doc = await addDoc(collection(db, 'preinscriptions'), {
+                ...formData,
+                telephoneNormalized,
+                statut: 'en_attente',
+                createdAt: serverTimestamp(),
+                source: 'online'
+              });
+              Logger.info('Pre-registration saved', { id: doc.id });
+              notify.success('Préinscription confirmée !');
+              preregForm.reset();
+              toggleFiliereAutre();
+              resetPreregFormUI();
+              showPreregSuccess();
+              return true;
+            } catch (error) {
+              Logger.error('Pre-registration error', error);
+              notify.error('Erreur lors de la préinscription.');
+              return false;
+            }
           }
-        }
-      );
-      
-      return result;
+        );
+
+        return result;
+      } finally {
+        isPreregSubmitting = false;
+      }
     });
   }
   
   // Real-time form validation
-  document.querySelectorAll('#preregForm input, #preregForm select').forEach(field => {
+  document.querySelectorAll('#preregForm input, #preregForm select, #preregForm textarea').forEach(field => {
     field.addEventListener('blur', debounce(() => {
       const form = field.closest('form');
       if (!form) return;

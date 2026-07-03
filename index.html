@@ -321,9 +321,24 @@
               <option value="ANGLAIS">Anglais</option>
               <option value="SEG">SEG</option>
               <option value="RIT">RIT</option>
+              <option value="Autre">Autre</option>
             </select>
             </div>
             <span class="form-error" id="filiere-error" role="alert"></span>
+          </div>
+
+          <div class="form-group conditional hidden" id="filiere-autre-group">
+            <label for="filiereAutre" class="form-label">
+              <span class="form-label-text">Précisez votre filière</span>
+            </label>
+            <textarea
+              id="filiereAutre"
+              name="filiereAutre"
+              class="form-input"
+              rows="3"
+              placeholder="Ex : Marketing digital, Gestion hôtelière..."
+              aria-label="Précisez votre filière si vous avez choisi autre"></textarea>
+            <span class="form-error" id="filiereAutre-error" role="alert"></span>
           </div>
 
           <div class="form-group">

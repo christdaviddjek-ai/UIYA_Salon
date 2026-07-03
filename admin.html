@@ -24,6 +24,7 @@
       --green-light:#e3f9ee;
       --orange:     #e67e22;
       --orange-light:#fef3e2;
+      --white:      #ffffff;
       --bg:         #edf2ff;
       --surface:    rgba(255,255,255,0.82);
       --surface-strong: rgba(255,255,255,0.95);
@@ -1220,7 +1221,7 @@
           <div style="font-size:36px;margin-bottom:14px;color:var(--navy);">
             <i data-lucide="users"></i>
           </div>
-          <h3 style="font-size:16px;font-weight:700;cologir:var(--navy);margin-bottom:8px;">
+          <h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;">
             Liste des visiteurs
           </h3>
           <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">
@@ -1318,7 +1319,8 @@
   let allData = [];   // cache local des données
   let allUsers = [];  // cache des comptes
 
-  const COLORS = ["#0A1E6E","#C0392B","#27ae60","#e67e22","#8e44ad","#2980b9"];
+  const CITY_COLORS = ["#1f77b4", "#2ca02c", "#ff7f0e", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"];
+  const FILIERE_COLORS = ["#d62728", "#ff9896", "#98df8a", "#c5b0d5", "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5"];
   let cityChart = null;
   let filieresChart = null;
 
@@ -1550,7 +1552,7 @@
       canvas = document.getElementById('visitorsCityChart');
     }
     var ctx = canvas.getContext('2d');
-    var bg = labels.map((_,i) => COLORS[i % COLORS.length]);
+    var bg = labels.map((_,i) => CITY_COLORS[i % CITY_COLORS.length]);
     if (cityChart) {
       cityChart.data.labels = labels;
       cityChart.data.datasets[0].data = data;
@@ -1587,7 +1589,7 @@
       canvas = document.getElementById('filieresBarChart');
     }
     var ctx = canvas.getContext('2d');
-    var bg = labels.map((_,i) => COLORS[i % COLORS.length]);
+    var bg = labels.map((_,i) => FILIERE_COLORS[i % FILIERE_COLORS.length]);
     if (filieresChart) {
       filieresChart.data.labels = labels;
       filieresChart.data.datasets[0].data = data;
