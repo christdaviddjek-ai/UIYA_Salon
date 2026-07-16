@@ -1184,6 +1184,7 @@
                 <th>#</th>
                 <th>Nom</th>
                 <th>Prénom</th>
+                <th>Numéro</th>
                 <th>Série</th>
                 <th>Filière</th>
                 <th>Ville de visite</th>
@@ -1191,7 +1192,7 @@
               </tr>
             </thead>
             <tbody id="visiteursTable">
-              <tr><td colspan="7"><div class="loader-wrap"><div class="loader"></div></div></td></tr>
+              <tr><td colspan="8"><div class="loader-wrap"><div class="loader"></div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1657,7 +1658,7 @@
     var tbody = document.getElementById("visiteursTable");
     document.getElementById("countVisiteurs").textContent = visitors.length + " visiteur(s) enregistré(s)";
     if (!visitors.length) {
-      tbody.innerHTML = '<tr><td colspan="7"><div class="table-empty"><span>📭</span>Aucun visiteur</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8"><div class="table-empty"><span>📭</span>Aucun visiteur</div></td></tr>';
       return;
     }
     tbody.innerHTML = visitors.map((d, i) => `
@@ -1665,6 +1666,7 @@
         <td style="color:var(--muted);font-size:12px;">${i+1}</td>
         <td><strong>${d.nom}</strong></td>
         <td>${d.prenom}</td>
+        <td>${d.telephone || "–"}</td>
         <td>${d.serie || "–"}</td>
         <td>${d.filiere || "–"}</td>
         <td>${d.villeVisite || "–"}</td>

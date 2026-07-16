@@ -1237,6 +1237,10 @@ select.form-input option[value=""] {
   .header-text h1 {
     font-size: 18px;
   }
+  .header-text h1 br,
+  .welcome h2 br {
+    display: none;
+  }
   .welcome h2 {
     font-size: 22px;
   }

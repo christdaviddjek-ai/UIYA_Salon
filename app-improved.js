@@ -174,10 +174,11 @@ async function saveVisitorInfo() {
   const nom = DOM.get('waNom')?.value?.trim();
   const prenom = DOM.get('waPrenom')?.value?.trim();
   const villeVisite = DOM.get('waVilleVisite')?.value?.trim();
+  const telephone = DOM.get('waTelephone')?.value?.trim();
   const serie = DOM.get('waSerie')?.value?.trim();
   const filiere = DOM.get('waFiliere')?.value?.trim();
 
-  if (!nom || !prenom || !villeVisite || !serie || !filiere) {
+  if (!nom || !prenom || !villeVisite || !telephone || !serie || !filiere) {
     notify.error('Tous les champs sont requis.');
     return false;
   }
@@ -201,6 +202,7 @@ async function saveVisitorInfo() {
       nom,
       prenom,
       villeVisite,
+      telephone,
       serie,
       filiere,
       groupeWA: false,
