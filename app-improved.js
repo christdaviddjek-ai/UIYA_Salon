@@ -176,7 +176,6 @@ async function saveVisitorInfo() {
   const villeVisite = DOM.get('waVilleVisite')?.value?.trim();
   const telephone = DOM.get('waTelephone')?.value?.trim();
   const serie = DOM.get('waSerie')?.value?.trim();
-  const filiere = DOM.get('waFiliere')?.value?.trim();
 
   if (!nom || !prenom || !villeVisite || !telephone || !serie) {
     notify.error('Tous les champs sont requis.');
@@ -204,7 +203,6 @@ async function saveVisitorInfo() {
       villeVisite,
       telephone,
       serie,
-      filiere,
       groupeWA: false,
       statut: 'valide',
       source: 'stand',
@@ -476,25 +474,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Pre-registration Form Submit
   const preregForm = document.getElementById(FORM_IDS.prereg);
   if (preregForm) {
-    const filiereSelect = DOM.get('filiere');
-    const filiereOtherGroup = DOM.get('filiere-autre-group');
-    const filiereOtherInput = DOM.get('filiereAutre');
-
-    const toggleFiliereAutre = () => {
-      if (!filiereSelect || !filiereOtherGroup) return;
-      if (filiereSelect.value === 'Autre') {
-        filiereOtherGroup.classList.remove('hidden');
-        filiereOtherInput?.setAttribute('required', 'required');
-      } else {
-        filiereOtherGroup.classList.add('hidden');
-        filiereOtherInput?.removeAttribute('required');
-        if (filiereOtherInput) filiereOtherInput.value = '';
-      }
-    };
-
-    toggleFiliereAutre();
-    filiereSelect?.addEventListener('change', toggleFiliereAutre);
-
     preregForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (isPreregSubmitting) return;
@@ -522,7 +501,6 @@ document.addEventListener('DOMContentLoaded', async () => {
               Logger.info('Pre-registration saved', { id: doc.id });
               notify.success('Préinscription confirmée !');
               preregForm.reset();
-              toggleFiliereAutre();
               resetPreregFormUI();
               showPreregSuccess();
               return true;

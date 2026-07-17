@@ -152,7 +152,7 @@
           </div>
           <div class="wa-step">
             <div class="wa-step-num">2</div>
-            <p>Nous gardons votre nom, prénom, série et filière souhaitée pour le suivi.</p>
+            <p>Nous gardons votre nom, prénom et série pour le suivi.</p>
           </div>
           <div class="wa-step">
             <div class="wa-step-num">3</div>
@@ -185,10 +185,6 @@
           <div class="form-row">
             <label for="waSerie">Série</label>
             <input id="waSerie" type="text" placeholder="Ex : D, C, A1,A2  " required />
-          </div>
-          <div class="form-row">
-            <label for="waFiliere">Filière souhaitée</label>
-            <input id="waFiliere" type="text" placeholder="Ex : IGL, RIT, COM"  />
           </div>
           <button class="submit-btn" type="submit">Enregistrer ma visite</button>
         </form>
@@ -303,43 +299,6 @@
               aria-required="true" />
             <span class="form-hint">Format : +225 XXXXXXXXXX ou  XXXXXXXXXX </span>
             <span class="form-error" id="telephone-error" role="alert"></span>
-          </div>
-
-          <div class="form-group">
-            <label for="filiere" class="form-label">
-              <span class="form-label-text">Filière souhaitée</span>
-            </label>
-            <div class="select-wrap">
-            <select 
-              id="filiere" 
-              name="filiere"
-              class="form-input"
-              aria-label="Choisir votre filière">
-              <option value="">-- Sélectionner une filière --</option>
-              <option value="IGL">IGL</option>
-              <option value="COM">COM</option>
-              <option value="DROIT">DROIT</option>
-              <option value="ANGLAIS">Anglais</option>
-              <option value="SEG">SEG</option>
-              <option value="RIT">RIT</option>
-              <option value="Autre">Autre</option>
-            </select>
-            </div>
-            <span class="form-error" id="filiere-error" role="alert"></span>
-          </div>
-
-          <div class="form-group conditional hidden" id="filiere-autre-group">
-            <label for="filiereAutre" class="form-label">
-              <span class="form-label-text">Précisez votre filière</span>
-            </label>
-            <textarea
-              id="filiereAutre"
-              name="filiereAutre"
-              class="form-input"
-              rows="3"
-              placeholder="Ex : Marketing digital, Gestion hôtelière..."
-              aria-label="Précisez votre filière si vous avez choisi autre"></textarea>
-            <span class="form-error" id="filiereAutre-error" role="alert"></span>
           </div>
 
           <div class="form-group">
