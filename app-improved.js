@@ -178,7 +178,7 @@ async function saveVisitorInfo() {
   const serie = DOM.get('waSerie')?.value?.trim();
   const filiere = DOM.get('waFiliere')?.value?.trim();
 
-  if (!nom || !prenom || !villeVisite || !telephone || !serie || !filiere) {
+  if (!nom || !prenom || !villeVisite || !telephone || !serie) {
     notify.error('Tous les champs sont requis.');
     return false;
   }
@@ -275,9 +275,7 @@ class FormValidator {
     if (!formData.prenom?.trim()) errors.prenom = 'Prenom requis';
     if (!formData.telephone?.trim()) errors.telephone = 'Telephone requis';
     if (!this.validatePhone(formData.telephone)) errors.telephone = 'Format telephone invalide';
-    if (!formData.filiere?.trim()) {
-      errors.filiere = 'Filiere requise';
-    } else if (formData.filiere === 'Autre' && !formData.filiereAutre?.trim()) {
+    if (formData.filiere === 'Autre' && !formData.filiereAutre?.trim()) {
       errors.filiereAutre = 'Veuillez préciser votre filière';
     }
     if (!formData.ville?.trim()) errors.ville = 'Ville requise';
