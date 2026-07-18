@@ -162,6 +162,32 @@ function isModalActive(modalId) {
   return modal ? modal.classList.contains('active') : false;
 }
 
+function getVisitorIdentityKey(nom, prenom, villeVisite) {
+  return `${(nom || '').trim().toLowerCase()}|${(prenom || '').trim().toLowerCase()}|${(villeVisite || '').trim().toLowerCase()}`;
+}
+
+function hasRecentVisitorDuplicate(nom, prenom, villeVisite) {
+  try {
+    const stored = JSON.parse(localStorage.getItem('uiya-visitor-keys') || '[]');
+    return stored.includes(getVisitorIdentityKey(nom, prenom, villeVisite));
+  } catch {
+    return false;
+  }
+}
+
+function rememberVisitorIdentity(nom, prenom, villeVisite) {
+  try {
+    const stored = JSON.parse(localStorage.getItem('uiya-visitor-keys') || '[]');
+    const key = getVisitorIdentityKey(nom, prenom, villeVisite);
+    if (!stored.includes(key)) {
+      stored.push(key);
+      localStorage.setItem('uiya-visitor-keys', JSON.stringify(stored));
+    }
+  } catch {
+    // Ignore storage issues and continue
+  }
+}
+
 function openWAModalOnReturn() {
   if (!shouldAutoOpenWAModal()) return;
   if (isModalActive('modalWA')) return;
@@ -182,21 +208,12 @@ async function saveVisitorInfo() {
     return false;
   }
 
-  try {
-    // Check for duplicate visitor in same city
-    const qV = query(
-      collection(db, 'preinscriptions'),
-      where('nom', '==', nom),
-      where('prenom', '==', prenom),
-      where('villeVisite', '==', villeVisite),
-      where('source', '==', 'stand')
-    );
-    const sV = await getDocs(qV);
-    if (!sV.empty) {
-      notify.warning('Une visite avec ce nom et prenom existe deja dans cette ville.');
-      return false;
-    }
+  if (hasRecentVisitorDuplicate(nom, prenom, villeVisite)) {
+    notify.warning('Cette visite a déjà été enregistrée récemment pour cette personne dans cette ville.');
+    return false;
+  }
 
+  try {
     const visitorData = {
       nom,
       prenom,
@@ -211,6 +228,7 @@ async function saveVisitorInfo() {
     };
 
     const docRef = await addDoc(collection(db, 'preinscriptions'), visitorData);
+    rememberVisitorIdentity(nom, prenom, villeVisite);
     Logger.info('Visiteur stand enregistre', { id: docRef.id, villeVisite, visitorData });
     notify.success('Visite enregistree! Rejoignez le groupe WA.');
     markVisitorSavedWithId(docRef.id);
