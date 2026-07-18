@@ -223,21 +223,25 @@ async function saveVisitorInfo() {
       groupeWA: false,
       statut: 'valide',
       source: 'stand',
-      createdAt: serverTimestamp(),
-      validatedAt: serverTimestamp()
+      createdAt: new Date(),
+      validatedAt: new Date()
     };
 
-    const docRef = await addDoc(collection(db, 'preinscriptions'), visitorData);
-    rememberVisitorIdentity(nom, prenom, villeVisite);
-    Logger.info('Visiteur stand enregistre', { id: docRef.id, villeVisite, visitorData });
-    notify.success('Visite enregistree! Rejoignez le groupe WA.');
-    markVisitorSavedWithId(docRef.id);
+    const savePromise = addDoc(collection(db, 'preinscriptions'), visitorData);
+
+    notify.info('Enregistrement en cours...');
+    markVisitorSavedWithId('pending');
     setWAJoinEnabled(true);
     updateWAModalUI();
 
     const form = document.getElementById('visitorForm');
     if (form) form.reset();
 
+    const docRef = await savePromise;
+    rememberVisitorIdentity(nom, prenom, villeVisite);
+    Logger.info('Visiteur stand enregistre', { id: docRef.id, villeVisite, visitorData });
+    notify.success('Visite enregistree! Rejoignez le groupe WA.');
+    markVisitorSavedWithId(docRef.id);
     return true;
   } catch (error) {
     Logger.error('Erreur en enregistrant la visite', error);
