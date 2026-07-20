@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
     /* ══════════════════════════════════════
@@ -1214,7 +1215,7 @@
             Toutes les pré-inscriptions avec nom, prénom, téléphone, filière, ville et établissement.
           </p>
           <button class="btn-export green" style="width:100%;justify-content:center;">
-            <i data-lucide="download"></i> Télécharger CSV
+            <i data-lucide="download"></i> Télécharger Excel
           </button>
         </div>
 
@@ -1229,7 +1230,7 @@
             Tous les visiteurs du stand avec leurs informations de contact.
           </p>
           <button class="btn-export blue" style="width:100%;justify-content:center;">
-            <i data-lucide="download"></i> Télécharger CSV
+            <i data-lucide="download"></i> Télécharger Excel
           </button>
         </div>
 
@@ -1241,10 +1242,10 @@
             Export complet
           </h3>
           <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">
-            Toutes les données combinées : visiteurs + pré-inscriptions en un seul fichier CSV.
+            Toutes les données combinées : visiteurs + pré-inscriptions en un seul fichier Excel.
           </p>
           <button class="btn-export green" style="width:100%;justify-content:center;background:var(--navy);color:#fff;border-color:var(--navy);">
-            <i data-lucide="download"></i> Télécharger tout
+            <i data-lucide="download"></i> Télécharger Excel
           </button>
         </div>
 
@@ -1725,20 +1726,20 @@
   }
 
   // ══════════════════════════════════════
-  //  EXPORTS CSV
+  //  EXPORTS XLSX
   // ══════════════════════════════════════
-  function toCSV(headers, rows) {
-    var lines = [headers.join(";")];
-    rows.forEach(r => lines.push(r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(";")));
-    return lines.join("\n");
-  }
-
-  function downloadCSV(content, filename) {
-    var bom = "\uFEFF"; // BOM pour Excel
-    var blob = new Blob([bom + content], { type: "text/csv;charset=utf-8;" });
-    var url  = URL.createObjectURL(blob);
-    var a    = document.createElement("a");
-    a.href = url; a.download = filename; a.click();
+  function downloadXLSX(headers, rows, filename) {
+    var wb = XLSX.utils.book_new();
+    var ws = XLSX.utils.aoa_to_sheet([headers].concat(rows));
+    XLSX.utils.book_append_sheet(wb, ws, "Export");
+    var wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    var blob = new Blob([wbout], { type: "application/octet-stream" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
     showToast("✅ Export téléchargé !", "success");
   }
@@ -1752,7 +1753,7 @@
       d.statut === "valide" ? "Validé" : d.statut === "refuse" ? "Refusé" : "En attente",
       d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString("fr-FR") : "–"
     ]);
-    downloadCSV(toCSV(headers, rows), "preinscriptions_uiya_2026.csv");
+    downloadXLSX(headers, rows, "preinscriptions_uiya_2026.xlsx");
   };
 
   window.exportVisiteurs = function () {
@@ -1762,7 +1763,7 @@
       i+1, d.nom, d.prenom, d.serie || "–", d.filiere || "–", d.villeVisite || "–",
       d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString("fr-FR") : "–"
     ]);
-    downloadCSV(toCSV(headers, rows), "visiteurs_uiya_2026.csv");
+    downloadXLSX(headers, rows, "visiteurs_uiya_2026.xlsx");
   };
 
   window.exportComplet = function () {
@@ -1773,7 +1774,7 @@
       d.statut === "valide" ? "Validé" : d.statut === "refuse" ? "Refusé" : "En attente",
       d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString("fr-FR") : "–"
     ]);
-    downloadCSV(toCSV(headers, rows), "export_complet_uiya_2026.csv");
+    downloadXLSX(headers, rows, "export_complet_uiya_2026.xlsx");
   };
 
   window.resetTestData = async function () {
